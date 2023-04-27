@@ -1,8 +1,8 @@
+#include <algorithm>
 #include "index/b_plus_tree_index.h"
 
 #include "index/generic_key.h"
 #include "utils/tree_file_mgr.h"
-
 BPlusTreeIndex::BPlusTreeIndex(index_id_t index_id, IndexSchema *key_schema, size_t key_size,
                                BufferPoolManager *buffer_pool_manager)
     : Index(index_id, key_schema),
