@@ -24,6 +24,8 @@ ExecuteEngine::ExecuteEngine() {
     mkdir("./databases", 0777);
     dir = opendir(path);
   }
+  /** After you finish the code for the CatalogManager section,
+   *  you can uncomment the commented code.
   struct dirent *stdir;
   while((stdir = readdir(dir)) != nullptr) {
     if( strcmp( stdir->d_name , "." ) == 0 ||
@@ -32,6 +34,7 @@ ExecuteEngine::ExecuteEngine() {
       continue;
     dbs_[stdir->d_name] = new DBStorageEngine(stdir->d_name, false);
   }
+   **/
   closedir(dir);
 }
 
