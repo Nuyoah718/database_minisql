@@ -120,6 +120,7 @@ void TablePage::ApplyDelete(const RowId &rid, Transaction *txn, LogManager *log_
           tuple_offset - free_space_pointer);
   SetFreeSpacePointer(free_space_pointer + tuple_size);
   SetTupleSize(slot_num, 0);
+  SetTupleCount(GetTupleCount() - 1);
   SetTupleOffsetAtSlot(slot_num, 0);
 
   // Update all tuple offsets.
