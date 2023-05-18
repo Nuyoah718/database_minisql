@@ -67,10 +67,12 @@ CatalogMeta::CatalogMeta() {}
 CatalogManager::CatalogManager(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager,
                                LogManager *log_manager, bool init)
     : buffer_pool_manager_(buffer_pool_manager), lock_manager_(lock_manager), log_manager_(log_manager) {
-    ASSERT(false, "Not Implemented yet");
+//    ASSERT(false, "Not Implemented yet");
 }
 
 CatalogManager::~CatalogManager() {
+ /** After you finish the code for the CatalogManager section,
+ *  you can uncomment the commented code. Otherwise it will affect b+tree test
   FlushCatalogMetaPage();
   delete catalog_meta_;
   for (auto iter : tables_) {
@@ -79,11 +81,12 @@ CatalogManager::~CatalogManager() {
   for (auto iter : indexes_) {
     delete iter.second;
   }
+  **/
 }
 
 /**
- * TODO: Student Implement
- */
+* TODO: Student Implement
+*/
 dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schema,
                                     Transaction *txn, TableInfo *&table_info) {
   // ASSERT(false, "Not Implemented yet");
