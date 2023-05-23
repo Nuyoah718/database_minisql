@@ -2,7 +2,7 @@
 
 #include "index/generic_key.h"
 
-#define pairs_off (data_ + INTERNAL_PAGE_HEADER_SIZE)
+#define pairs_off (data_)
 #define pair_size (GetKeySize() + sizeof(page_id_t))
 #define key_off 0
 #define val_off GetKeySize()
