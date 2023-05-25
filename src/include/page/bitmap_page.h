@@ -29,6 +29,8 @@ class BitmapPage {
    * @return whether a page in the extent is free
    */
   bool IsPageFree(uint32_t page_offset) const;
+  
+  bool IsBitmapFull();
 
  private:
   /**
@@ -45,8 +47,11 @@ class BitmapPage {
 
  private:
   /** The space occupied by all members of the class should be equal to the PageSize */
-  [[maybe_unused]] uint32_t page_allocated_;
-  [[maybe_unused]] uint32_t next_free_page_;
+  [[maybe_unused]] uint32_t page_allocated_{0};
+ public:
+  [[maybe_unused]] uint32_t next_free_page_{0};
+ private:
+  std::bitset<8 * MAX_CHARS> allocate_pages;
   [[maybe_unused]] unsigned char bytes[MAX_CHARS];
 };
 
