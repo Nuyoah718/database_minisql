@@ -20,6 +20,7 @@ TEST(DiskManagerTest, BitMapPageTest) {
     ASSERT_TRUE(page_set.find(ofs) == page_set.end());
     page_set.insert(ofs);
   }
+  ofs = 233;
   ASSERT_FALSE(bitmap->AllocatePage(ofs));
   ASSERT_TRUE(bitmap->DeAllocatePage(233));
   ASSERT_TRUE(bitmap->AllocatePage(ofs));
@@ -28,9 +29,11 @@ TEST(DiskManagerTest, BitMapPageTest) {
     ASSERT_TRUE(bitmap->DeAllocatePage(v));
     ASSERT_FALSE(bitmap->DeAllocatePage(v));
   }
+  ofs = 0;
   for (uint32_t i = 0; i < num_pages; i++) {
     ASSERT_TRUE(bitmap->AllocatePage(ofs));
   }
+  ofs--;
   ASSERT_FALSE(bitmap->AllocatePage(ofs));
 }
 
@@ -39,6 +42,10 @@ TEST(DiskManagerTest, FreePageAllocationTest) {
   DiskManager *disk_mgr = new DiskManager(db_name);
   int extent_nums = 2;
   for (uint32_t i = 0; i < DiskManager::BITMAP_SIZE * extent_nums; i++) {
+    if(i==DiskManager::BITMAP_SIZE-1){
+      int a =0;
+      a--;
+    }
     page_id_t page_id = disk_mgr->AllocatePage();
     DiskFileMetaPage *meta_page = reinterpret_cast<DiskFileMetaPage *>(disk_mgr->GetMetaData());
     EXPECT_EQ(i, page_id);
