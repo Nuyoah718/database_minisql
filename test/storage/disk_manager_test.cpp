@@ -1,8 +1,7 @@
-#include "storage/disk_manager.h"
-
 #include <unordered_set>
 
 #include "gtest/gtest.h"
+#include "storage/disk_manager.h"
 
 TEST(DiskManagerTest, BitMapPageTest) {
   const size_t size = 512;
@@ -13,9 +12,9 @@ TEST(DiskManagerTest, BitMapPageTest) {
   for (uint32_t i = 0; i < num_pages; i++) {
     ASSERT_TRUE(bitmap->IsPageFree(i));
   }
-  uint32_t ofs;
+  uint32_t ofs = 0;
   std::unordered_set<uint32_t> page_set;
-  for (uint32_t i = 0; i < num_pages; i++) {
+  for (uint32_t i = 0; i < num_pages; i++, ofs++) {
     ASSERT_TRUE(bitmap->AllocatePage(ofs));
     ASSERT_TRUE(page_set.find(ofs) == page_set.end());
     page_set.insert(ofs);
@@ -30,7 +29,7 @@ TEST(DiskManagerTest, BitMapPageTest) {
     ASSERT_FALSE(bitmap->DeAllocatePage(v));
   }
   ofs = 0;
-  for (uint32_t i = 0; i < num_pages; i++) {
+  for (uint32_t i = 0; i < num_pages; i++, ofs++) {
     ASSERT_TRUE(bitmap->AllocatePage(ofs));
   }
   ofs--;
@@ -53,6 +52,7 @@ TEST(DiskManagerTest, FreePageAllocationTest) {
     EXPECT_EQ(i + 1, meta_page->GetAllocatedPages());
     EXPECT_EQ(i % DiskManager::BITMAP_SIZE + 1, meta_page->GetExtentUsedPage(i / DiskManager::BITMAP_SIZE));
   }
+
   disk_mgr->DeAllocatePage(0);
   disk_mgr->DeAllocatePage(DiskManager::BITMAP_SIZE - 1);
   disk_mgr->DeAllocatePage(DiskManager::BITMAP_SIZE);
