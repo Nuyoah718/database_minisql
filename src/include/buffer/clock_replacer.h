@@ -10,7 +10,8 @@
 
 using namespace std;
 
-class ClockReplacer: public Replacer {
+class ClockReplacer: public Replacer 
+{
  private:
   /**
    * @brief state of the frame
@@ -18,7 +19,12 @@ class ClockReplacer: public Replacer {
    * if unpin -> ACCESSED
    * after ACCESSED -> UNUSED
    */
-  enum class State { EMPTY, ACCESSED, UNUSED };
+  enum class State 
+  { 
+    EMPTY, 
+    ACCESSED, 
+    UNUSED 
+  };
 
  public:
   /**
