@@ -44,9 +44,9 @@ class ClockReplacer: public Replacer {
   static bool IsEmpty(ClockReplacer::State &);
 
  private:
-  std::vector<State> second_chance;
-  frame_id_t pointer{0};
-  size_t capacity;
+  std::vector<State> replacer;
+  frame_id_t index{0};
+  size_t max_size;
 };
 
 #endif  // MINISQL_CLOCK_REPLACER_H
