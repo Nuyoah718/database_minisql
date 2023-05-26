@@ -37,9 +37,8 @@ class LRUReplacer : public Replacer {
   size_t Size() override;
 
  private:
-  // add your own private member variables here
   size_t capacity;
-  list<frame_id_t> visit_lst;
+  list<frame_id_t> frameList;
   unordered_map<frame_id_t, list<frame_id_t>::iterator> mapping;
 };
 
