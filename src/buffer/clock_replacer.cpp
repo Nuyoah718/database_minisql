@@ -1,82 +1,64 @@
 #include "buffer/clock_replacer.h"
 
 ClockReplacer::ClockReplacer(size_t num_pages)
-    :second_chance(num_pages,State::EMPTY),
-      pointer(0),
-      capacity(num_pages) 
-      {
-          
-      }
+    : m_states(num_pages, State::EMPTY),
+      m_pointer(0),
+      m_capacity(num_pages)
+{}
 
-ClockReplacer::~ClockReplacer() 
-{
-    
-}
+ClockReplacer::~ClockReplacer() {}
 
-bool ClockReplacer::Victim(frame_id_t *frame_id) 
-{
-  size_t nonempty_count = 0, i;
+bool ClockReplacer::pickVictim(frame_id_t* frame_id) {
+  size_t non_empty_count = 0;
   frame_id_t victim_frame_id = 0;
 
-  for (i = 0; i < capacity; i++) 
-  {
-    auto id = (pointer + i) % capacity;
-    if (second_chance[id] == State::EMPTY)
+  for (size_t i = 0; i < m_capacity; i++) {
+    const auto id = (m_pointer + i) % m_capacity;
+    if (m_states[id] == State::EMPTY) {
       continue;
-    else if (second_chance[id] == State::ACCESSED) 
-    {
-      nonempty_count++;
-      second_chance[id] = State::UNUSED; 
-    } 
-    else if (second_chance[id] == State::UNUSED) 
-    {
-      nonempty_count++;
+    } else if (m_states[id] == State::ACCESSED) {
+      non_empty_count++;
+      m_states[id] = State::UNUSED;
+    } else if (m_states[id] == State::UNUSED) {
+      non_empty_count++;
       victim_frame_id = (victim_frame_id != 0) ? victim_frame_id : id;
     }
   }
 
-  if (nonempty_count == 0) 
-  {
-    frame_id = nullptr;
+  if (non_empty_count == 0) {
+    *frame_id = 0;
     return false;
-  }
+ }
 
-  if (victim_frame_id == 0) 
-  {
-    for (i = 0; i < capacity; i++) 
-    {
-      auto id = (pointer + i) % capacity;
-      if (second_chance[id] == State::UNUSED) 
-      {
+  if (victim_frame_id == 0) {
+    for (size_t i = 0; i < m_capacity; i++) {
+      const auto id = (m_pointer + i) % m_capacity;
+      if (m_states[id] == State::UNUSED) {
         victim_frame_id = id;
         break;
       }
     }
   }
 
-  second_chance[victim_frame_id] = State::EMPTY;
-  pointer = victim_frame_id;
+  m_states[victim_frame_id] = State::EMPTY;
+  m_pointer = victim_frame_id;
   *frame_id = victim_frame_id;
 
   return true;
 }
 
-void ClockReplacer::Pin(frame_id_t frame_id) 
-{
-  second_chance[frame_id % capacity] = State::EMPTY;
+void ClockReplacer::pin(frame_id_t frame_id) {
+  m_states[frame_id % m_capacity] = State::EMPTY;
 }
 
-void ClockReplacer::Unpin(frame_id_t frame_id) 
-{
-  second_chance[frame_id % capacity] = State::ACCESSED;
+void ClockReplacer::unpin(frame_id_t frame_id) {
+  m_states[frame_id % m_capacity] = State::ACCESSED;
 }
 
-size_t ClockReplacer::Size() 
-{
-  return count_if(second_chance.begin(), second_chance.end(), IsEmpty);
+size_t ClockReplacer::size() const {
+  return std::count_if(m_states.begin(), m_states.end(), IsNotEmpty);
 }
 
-bool ClockReplacer::IsEmpty(ClockReplacer::State& item) 
-{
+bool ClockReplacer::IsNotEmpty(const ClockReplacer::State& item) {
   return item != State::EMPTY;
 }
