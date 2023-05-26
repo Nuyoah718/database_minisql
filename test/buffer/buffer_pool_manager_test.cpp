@@ -1,9 +1,8 @@
-#include "buffer/buffer_pool_manager.h"
-
 #include <cstdio>
 #include <random>
 #include <string>
 
+#include "buffer/buffer_pool_manager.h"
 #include "gtest/gtest.h"
 
 TEST(BufferPoolManagerTest, BinaryDataTest) {
@@ -18,7 +17,7 @@ TEST(BufferPoolManagerTest, BinaryDataTest) {
   auto *disk_manager = new DiskManager(db_name);
   auto *bpm = new BufferPoolManager(buffer_pool_size, disk_manager);
 
-  page_id_t page_id_temp;
+  page_id_t page_id_temp = 0;
   auto *page0 = bpm->NewPage(page_id_temp);
 
   // Scenario: The buffer pool is empty. We should be able to create a new page.
