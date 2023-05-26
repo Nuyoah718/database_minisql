@@ -3,8 +3,7 @@
 ClockReplacer::ClockReplacer(size_t num_pages)
     : m_states(num_pages, State::EMPTY),
       m_pointer(0),
-      m_capacity(num_pages)
-{}
+      m_capacity(num_pages) {}
 
 ClockReplacer::~ClockReplacer() {}
 
@@ -50,7 +49,6 @@ bool ClockReplacer::pickVictim(frame_id_t* frame_id) {
 void ClockReplacer::pin(frame_id_t frame_id) {
   m_states[frame_id % m_capacity] = State::EMPTY;
 }
-
 void ClockReplacer::unpin(frame_id_t frame_id) {
   m_states[frame_id % m_capacity] = State::ACCESSED;
 }
