@@ -6,7 +6,7 @@
 #include <iostream>
 #include <mutex>
 #include <string>
-
+#include <unordered_map>
 #include "common/config.h"
 #include "common/macros.h"
 #include "page/bitmap_page.h"
