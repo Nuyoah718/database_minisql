@@ -1,7 +1,8 @@
 #include "buffer/lru_replacer.h"
 #include "gtest/gtest.h"
 
-TEST(LRUReplacerTest, SampleTest) {
+TEST(LRUReplacerTest, SampleTest) 
+{
   LRUReplacer lru_replacer(7);
 
   // Scenario: unpin six elements, i.e. add them to the replacer.
