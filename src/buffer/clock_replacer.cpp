@@ -1,62 +1,98 @@
 #include "buffer/clock_replacer.h"
 
+//构造函数
 ClockReplacer::ClockReplacer(size_t num_pages)
-    : m_states(num_pages, State::EMPTY),
-      m_pointer(0),
-      m_capacity(num_pages) {}
+    :replacer(num_pages,State::EMPTY),
+      index(0),
+      max_size(num_pages) {}
 
-ClockReplacer::~ClockReplacer() {}
+//析构函数
+ClockReplacer::~ClockReplacer() 
+{
+  //无需执行任何操作
+}
 
-bool ClockReplacer::pickVictim(frame_id_t* frame_id) {
-  size_t non_empty_count = 0;
-  frame_id_t victim_frame_id = 0;
+//获取牺牲页
+bool ClockReplacer::Victim(frame_id_t *frame_id) 
+{
+  size_t not_empty_count = 0, counter;
+  frame_id_t chosen_frame_id = 0;
 
-  for (size_t i = 0; i < m_capacity; i++) {
-    const auto id = (m_pointer + i) % m_capacity;
-    if (m_states[id] == State::EMPTY) {
+  //遍历找出第一个可用的牺牲页
+  for (counter = 0; counter < max_size; counter++) 
+  {
+    auto id = (index + counter) % max_size;
+    if (replacer[id] == State::EMPTY)
       continue;
-    } else if (m_states[id] == State::ACCESSED) {
-      non_empty_count++;
-      m_states[id] = State::UNUSED;
-    } else if (m_states[id] == State::UNUSED) {
-      non_empty_count++;
-      victim_frame_id = (victim_frame_id != 0) ? victim_frame_id : id;
+    else if (replacer[id] == State::ACCESSED) 
+    {
+      not_empty_count++;
+      replacer[id] = State::UNUSED;  //重置为未使用状态
+    } 
+    else if (replacer[id] == State::UNUSED) 
+    {
+      not_empty_count++;
+      //获取第一个牺牲页
+      chosen_frame_id = (chosen_frame_id != 0) ? chosen_frame_id : id;
     }
   }
 
-  if (non_empty_count == 0) {
-    *frame_id = 0;
+  //如果全部为空，返回false
+  if (not_empty_count == 0) 
+  {
+    frame_id = nullptr;
     return false;
- }
+  }
 
-  if (victim_frame_id == 0) {
-    for (size_t i = 0; i < m_capacity; i++) {
-      const auto id = (m_pointer + i) % m_capacity;
-      if (m_states[id] == State::UNUSED) {
-        victim_frame_id = id;
+  if (chosen_frame_id == 0) 
+  {
+    for (counter = 0; counter < max_size; counter++) 
+    {
+      auto id = (index + counter) % max_size;
+      if (replacer[id] == State::UNUSED) 
+      {
+        chosen_frame_id = id;
         break;
       }
     }
   }
 
-  m_states[victim_frame_id] = State::EMPTY;
-  m_pointer = victim_frame_id;
-  *frame_id = victim_frame_id;
+  //设置所选页为空
+  replacer[chosen_frame_id] = State::EMPTY;
+  index = chosen_frame_id;
+  *frame_id = chosen_frame_id;
 
   return true;
 }
 
-void ClockReplacer::pin(frame_id_t frame_id) {
-  m_states[frame_id % m_capacity] = State::EMPTY;
-}
-void ClockReplacer::unpin(frame_id_t frame_id) {
-  m_states[frame_id % m_capacity] = State::ACCESSED;
-}
-
-size_t ClockReplacer::size() const {
-  return std::count_if(m_states.begin(), m_states.end(), IsNotEmpty);
+//将帧置为锁定状态
+void ClockReplacer::Pin(frame_id_t frame_id) 
+{
+  //从替换器中移除
+  replacer[frame_id % max_size] = State::EMPTY;
 }
 
-bool ClockReplacer::IsNotEmpty(const ClockReplacer::State& item) {
-  return item != State::EMPTY;
+//取消对帧的锁定
+void ClockReplacer::Unpin(frame_id_t frame_id) 
+{
+  //添加到替换器中
+  replacer[frame_id % max_size] = State::ACCESSED;
+}
+
+/**
+ * @brief 计算那些状态不等于EMPTY的数量
+ * @return 返回替换器的当前大小
+ */
+size_t ClockReplacer::Size() 
+{
+  return count_if(replacer.begin(), replacer.end(), IsEmpty);
+}
+
+/**
+ * @param item
+ * @return 如果item的状态等于State::EMPTY，返回true，否则返回false
+ */
+bool ClockReplacer::IsEmpty(ClockReplacer::State& item) 
+{
+  return item == State::EMPTY;
 }
