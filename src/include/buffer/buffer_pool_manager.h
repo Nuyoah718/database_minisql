@@ -14,7 +14,7 @@
 using namespace std;
 
 class BufferPoolManager {
-public:
+ public:
   explicit BufferPoolManager(size_t pool_size, DiskManager *disk_manager);
 
   ~BufferPoolManager();
@@ -33,7 +33,7 @@ public:
 
   bool CheckAllUnpinned();
 
-private:
+ private:
   /**
    * Allocate new page (operations like create index/table) For now just keep an increasing counter
    */
@@ -45,7 +45,7 @@ private:
   void DeallocatePage(page_id_t page_id);
 
 
-private:
+ private:
   size_t pool_size_;                                        // number of pages in buffer pool
   Page *pages_;                                             // array of pages
   DiskManager *disk_manager_;                               // pointer to the disk manager.
