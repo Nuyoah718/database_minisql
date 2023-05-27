@@ -24,7 +24,7 @@ ExecuteEngine::ExecuteEngine() {
     mkdir("./databases", 0777);
     dir = opendir(path);
   }
-  /** After you finish the code for the CatalogManager section,
+  /** After you finish the code for the Executor section,
    *  you can uncomment the commented code.
   struct dirent *stdir;
   while((stdir = readdir(dir)) != nullptr) {
