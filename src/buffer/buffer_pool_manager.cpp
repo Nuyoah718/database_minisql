@@ -110,9 +110,61 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id)
   // 3.   Update P's metadata, zero out memory and add P to the page table.
   // 4.   Set the page ID output parameter. Return a pointer to P.
 
-  
-  
-  
+  //检查缓冲池中是否所有页面都被引用
+  size_t idx = 0;
+  for (idx = 0; idx < pool_size_; idx++)
+  {
+    if (pages_[idx].GetPinCount() <= 0)
+      break;
+  }
+
+  //如果所有页面都被引用，返回nullptr
+  if (idx == pool_size_)
+  {
+    return nullptr;
+  }
+  frame_id_t frame_idx;
+  Page *target_frame;
+
+  //首先从空闲列表中获取
+  if (!free_list_.empty())
+  {
+    frame_idx = free_list_.front();
+    free_list_.pop_front();
+  }
+  else
+  {
+    //如果空闲列表没有，从替换器中获取
+    if (!replacer_->Victim(&frame_idx))
+    {
+      return nullptr;
+    }
+  }
+  target_frame = &pages_[frame_idx];
+
+  //如果页面是脏页，写回磁盘
+  if (target_frame->IsDirty())
+  {
+    disk_manager_->WritePage(target_frame->page_id_, target_frame->data_);
+    target_frame->is_dirty_ = false;
+  }
+
+  //分配新的页面ID
+  auto new_page_id = AllocatePage();
+
+  //从页面表中删除旧的页面，插入新的页面
+  page_table_.erase(target_frame->page_id_);
+  page_table_.insert({new_page_id, frame_idx});
+
+  //更新页面元数据，清零内存，增加页面的引用计数
+  target_frame->page_id_ = new_page_id;
+  target_frame->ResetMemory();
+  target_frame->pin_count_++;
+  replacer_->Pin(frame_idx);
+
+  //设置页面ID并返回新的页面
+  page_id = new_page_id;
+  return target_frame;
 }
 
 /**
