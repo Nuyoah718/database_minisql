@@ -31,6 +31,8 @@ class BufferPoolManager
 
   bool IsPageFree(page_id_t page_id);
 
+  void FlushAllPages();
+
   bool CheckAllUnpinned();
 
  private:
