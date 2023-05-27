@@ -178,7 +178,45 @@ bool BufferPoolManager::DeletePage(page_id_t page_id)
   // 1.   If P does not exist, return true.
   // 2.   If P exists, but has a non-zero pin-count, return false. Someone is using the page.
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
-  return false;
+  
+  //查找页面
+  auto page_itr = page_table_.find(page_id);
+  frame_id_t frame_idx;
+  Page *target_page;
+  
+  //如果页面不存在，直接返回true
+  if (page_itr == page_table_.end()) 
+    return true;  
+                                                   
+  //如果页面存在
+  frame_idx = page_itr->second;
+  target_page = &pages_[frame_idx];
+
+  //如果页面的引用计数不为0，返回false
+  if (target_page->pin_count_ > 0) 
+    return false;
+
+  //如果页面是脏页，写回磁盘
+  if (target_page->IsDirty()) 
+  {
+    disk_manager_->WritePage(target_page->page_id_, target_page->data_);
+    target_page->is_dirty_ = false;
+  }
+
+  //从页表中删除页面并释放页面
+  page_table_.erase(target_page->page_id_);
+  DeallocatePage(target_page->page_id_);
+
+  //重置页面元数据并将页面ID添加到空闲列表
+  target_page->ResetMemory();
+  target_page->page_id_ = INVALID_PAGE_ID;
+  target_page->pin_count_ = 0;
+  target_page->is_dirty_ = false;
+  
+  //回收frame_idx
+  free_list_.push_back(frame_idx);  
+
+  return true;
 }
 
 /**
