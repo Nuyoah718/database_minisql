@@ -9,7 +9,7 @@
  * | page_id(32bit) | slot_num(32bit) |
  */
 class RowId {
- public:
+public:
   RowId() = default;
 
   RowId(page_id_t page_id, uint32_t slot_num) : page_id_(page_id), slot_num_(slot_num) {}
@@ -36,4 +36,4 @@ class RowId {
 
 static const RowId INVALID_ROWID = RowId(INVALID_PAGE_ID, 0);
 
-#endif  // MINISQL_RID_H
+#endif  //MINISQL_RID_H
