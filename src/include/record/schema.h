@@ -45,24 +45,27 @@ class Schema {
    * @param: attrs Column index map from index to tuple
    * eg: Tuple(A, B, C, D)  Index(D, A) ==> attrs(3, 0)
    */
-  static Schema *ShallowCopySchema(const Schema *table_schema, const std::vector<uint32_t> &attrs) {
+  static Schema *ShallowCopySchema(const Schema *table_schema, const std::vector<uint32_t> &attrs, MemHeap *heap) {
     std::vector<Column *> cols;
     cols.reserve(attrs.size());
     for (const auto i : attrs) {
       cols.emplace_back(table_schema->columns_[i]);
     }
-    return new Schema(cols, false);
+    void *buf = heap->Allocate(sizeof(Schema));
+    return new(buf) Schema(cols);
   }
 
   /**
    * Deep copy schema
    */
-  static Schema *DeepCopySchema(const Schema *from) {
+  static Schema *DeepCopySchema(const Schema *from, MemHeap *heap) {
     std::vector<Column *> cols;
     for (uint32_t i = 0; i < from->GetColumnCount(); i++) {
-      cols.push_back(new Column(from->GetColumn(i)));
+      void *buf = heap->Allocate(sizeof(Column));
+      cols.push_back(new(buf)Column(from->GetColumn(i)));
     }
-    return new Schema(cols, true);
+    void *buf = heap->Allocate(sizeof(Schema));
+    return new(buf) Schema(cols);
   }
 
   /**
