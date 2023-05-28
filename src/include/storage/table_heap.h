@@ -13,13 +13,15 @@ class TableHeap {
 
  public:
   static TableHeap *Create(BufferPoolManager *buffer_pool_manager, Schema *schema, Transaction *txn,
-                           LogManager *log_manager, LockManager *lock_manager) {
-    return new TableHeap(buffer_pool_manager, schema, txn, log_manager, lock_manager);
+                           LogManager *log_manager, LockManager *lock_manager, MemHeap *heap) {
+    void *buf = heap->Allocate(sizeof(TableHeap));
+    return new (buf) TableHeap(buffer_pool_manager, schema, txn, log_manager, lock_manager);
   }
 
   static TableHeap *Create(BufferPoolManager *buffer_pool_manager, page_id_t first_page_id, Schema *schema,
-                           LogManager *log_manager, LockManager *lock_manager) {
-    return new TableHeap(buffer_pool_manager, first_page_id, schema, log_manager, lock_manager);
+                           LogManager *log_manager, LockManager *lock_manager, MemHeap *heap) {
+    void *buf = heap->Allocate(sizeof(TableHeap));
+    return new (buf) TableHeap(buffer_pool_manager, first_page_id, schema, log_manager, lock_manager);
   }
 
   ~TableHeap() {}
@@ -107,15 +109,24 @@ private:
   /**
    * create table heap and initialize first page
    */
-  explicit TableHeap(BufferPoolManager *buffer_pool_manager, Schema *schema, Transaction *txn,
-                     LogManager *log_manager, LockManager *lock_manager) :
-          buffer_pool_manager_(buffer_pool_manager),
-          schema_(schema),
-          log_manager_(log_manager),
-          lock_manager_(lock_manager) {
-    ASSERT(false, "Not implemented yet.");
+  explicit TableHeap(BufferPoolManager *buffer_pool_manager, Schema *schema, Transaction *txn, LogManager *log_manager,
+                     LockManager *lock_manager)
+      : buffer_pool_manager_(buffer_pool_manager),
+        schema_(schema),
+        log_manager_(log_manager),
+        lock_manager_(lock_manager) {
+    // initialize the first table page for the table heap
+    auto first_page = (TablePage *)(buffer_pool_manager_->NewPage(first_page_id_));
+    ASSERT(first_page != nullptr, "Can not initialize the first page for table heap.");
+    first_page->Init(first_page_id_, INVALID_PAGE_ID, log_manager_, txn);
+
+    // first created, need to write to disk, so it's dirty
+    buffer_pool_manager_->UnpinPage(first_page_id_, true);
   };
 
+  /**
+   * load existing table heap by first_page_id
+   */
   explicit TableHeap(BufferPoolManager *buffer_pool_manager, page_id_t first_page_id, Schema *schema,
                      LogManager *log_manager, LockManager *lock_manager)
       : buffer_pool_manager_(buffer_pool_manager),
@@ -123,6 +134,7 @@ private:
         schema_(schema),
         log_manager_(log_manager),
         lock_manager_(lock_manager) {}
+
 
  private:
   BufferPoolManager *buffer_pool_manager_;
