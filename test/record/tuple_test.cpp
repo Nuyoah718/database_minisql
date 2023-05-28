@@ -90,7 +90,6 @@ TEST(TupleTest, FieldSerializeDeserializeTest) {
 /**
  * Test for column serialize and deserialize
  */
-
 Column attrs[]= {
     Column("id", TypeId::kTypeInt, 0, false, true),
     Column("name", TypeId::kTypeInt, 1, false, false),
@@ -122,11 +121,10 @@ TEST(TupleTest, ColumnSerializeDeserializeTest) {
 /**
  * Test for row serialize and deserialize
  */
-
-TEST(TupleTest, RowSerializeDeserializeTest) {
+TEST(TupleTest, RowSerializeDeserializeTest) 
+{
   char buffer[PAGE_SIZE];
   memset(buffer, 0, sizeof(buffer));
-  // Serialize phase
   SimpleMemHeap heap;
 
   std::vector<Column *> columns = {ALLOC_COLUMN(heap)("id", TypeId::kTypeInt, 0, false, false),
@@ -140,8 +138,6 @@ TEST(TupleTest, RowSerializeDeserializeTest) {
   Schema schema(columns);
 
   uint32_t ofs_to = row.SerializeTo(buffer, &schema);
-
-  // Deserialize phase
   uint32_t ofs_from = row.DeserializeFrom(buffer, &schema);
   ASSERT_TRUE(ofs_to == ofs_from);
   for (int i = 0; i < 3; i++) {
@@ -149,7 +145,8 @@ TEST(TupleTest, RowSerializeDeserializeTest) {
   }
 }
 
-TEST(TupleTest, RowTest) {
+TEST(TupleTest, RowTest) 
+{
   SimpleMemHeap heap;
   TablePage table_page;
   // create schema
@@ -175,9 +172,8 @@ TEST(TupleTest, RowTest) {
   ASSERT_TRUE(table_page.GetTuple(&row2, schema.get(), nullptr, nullptr));
   std::vector<Field *> &row2_fields = row2.GetFields();
   ASSERT_EQ(3, row2_fields.size());
-  for (size_t i = 0; i < row2_fields.size(); i++) {
+  for (size_t i = 0; i < row2_fields.size(); i++)
     ASSERT_EQ(CmpBool::kTrue, row2_fields[i]->CompareEquals(fields[i]));
-  }
   ASSERT_TRUE(table_page.MarkDelete(row.GetRowId(), nullptr, nullptr, nullptr));
   table_page.ApplyDelete(row.GetRowId(), nullptr, nullptr);
 }
