@@ -26,7 +26,7 @@ class Column {
 
   bool IsNullable() const { return nullable_; }
 
-  bool IsUnique() const {return unique_; }
+  bool IsUnique() const { return unique_; }
 
   TypeId GetType() const { return type_; }
 
@@ -34,7 +34,7 @@ class Column {
 
   uint32_t GetSerializedSize() const;
 
-  static uint32_t DeserializeFrom(char *buf, Column *&column);
+  static uint32_t DeserializeFrom(char *buf, Column *&column, MemHeap *heap);
 
  private:
   static constexpr uint32_t COLUMN_MAGIC_NUM = 210928;
@@ -45,6 +45,7 @@ class Column {
   uint32_t table_ind_{0};  // column position in table
   bool nullable_{false};   // whether the column can be null
   bool unique_{false};     // whether the column is unique
+
 };
 
-#endif  // MINISQL_COLUMN_H
+#endif //MINISQL_COLUMN_H
