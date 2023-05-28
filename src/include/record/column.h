@@ -6,7 +6,8 @@
 #include "common/macros.h"
 #include "record/types.h"
 
-class Column {
+class Column 
+{
   friend class Schema;
 
  public:
@@ -26,7 +27,7 @@ class Column {
 
   bool IsNullable() const { return nullable_; }
 
-  bool IsUnique() const { return unique_; }
+  bool IsUnique() const {return unique_; }
 
   TypeId GetType() const { return type_; }
 
@@ -34,7 +35,7 @@ class Column {
 
   uint32_t GetSerializedSize() const;
 
-  static uint32_t DeserializeFrom(char *buf, Column *&column, MemHeap *heap);
+  static uint32_t DeserializeFrom(char *buf, Column *&column);
 
  private:
   static constexpr uint32_t COLUMN_MAGIC_NUM = 210928;
@@ -45,7 +46,14 @@ class Column {
   uint32_t table_ind_{0};  // column position in table
   bool nullable_{false};   // whether the column can be null
   bool unique_{false};     // whether the column is unique
-
+  static void WriteUint32(char *buf, uint32_t value) ;
+  static void WriteBool(char *buf, bool value) ;
+  static void WriteTypeId(char *buf, TypeId value) ;
+  static void WriteString(char *buf, const string &value) ;
+  static uint32_t ReadUint32(const char *buf);
+  static bool ReadBool(const char *buf);
+  static TypeId ReadTypeId(const char *buf);
+  static string ReadString(const char *buf);
 };
 
-#endif //MINISQL_COLUMN_H
+#endif  // MINISQL_COLUMN_H
