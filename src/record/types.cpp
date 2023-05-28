@@ -2,15 +2,15 @@
 #include "record/types.h"
 #include "record/field.h"
 
-inline int CompareStrings(const char *str1, int len1, const char *str2, int len2) {
+inline int CompareStrings(const char *str1, int len1, const char *str2, int len2) 
+{
   assert(str1 != nullptr);
   assert(len1 >= 0);
   assert(str2 != nullptr);
   assert(len2 >= 0);
   int ret = memcmp(str1, str2, static_cast<size_t>(std::min(len1, len2)));
-  if (ret == 0 && len1 != len2) {
+  if (ret == 0 && len1 != len2)
     ret = len1 - len2;
-  }
   return ret;
 }
 
@@ -100,57 +100,50 @@ uint32_t TypeInt::DeserializeFrom(char *storage, Field **field, bool is_null, Me
 }
 
 uint32_t TypeInt::GetSerializedSize(const Field &field, bool is_null) const {
-  if (is_null) {
+  if (is_null) 
     return 0;
-  }
   return GetTypeSize(type_id_);
 }
 
 CmpBool TypeInt::CompareEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull())
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.integer_ == right.value_.integer_);
 }
 
 CmpBool TypeInt::CompareNotEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.integer_ != right.value_.integer_);
 }
 
 CmpBool TypeInt::CompareLessThan(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.integer_ < right.value_.integer_);
 }
 
 CmpBool TypeInt::CompareLessThanEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.integer_ <= right.value_.integer_);
 }
 
 CmpBool TypeInt::CompareGreaterThan(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.integer_ > right.value_.integer_);
 }
 
 CmpBool TypeInt::CompareGreaterThanEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.integer_ >= right.value_.integer_);
 }
 
@@ -175,57 +168,50 @@ uint32_t TypeFloat::DeserializeFrom(char *storage, Field **field, bool is_null, 
 }
 
 uint32_t TypeFloat::GetSerializedSize(const Field &field, bool is_null) const {
-  if (is_null) {
+  if (is_null) 
     return 0;
-  }
   return GetTypeSize(type_id_);
 }
 
 CmpBool TypeFloat::CompareEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.float_ == right.value_.float_);
 }
 
 CmpBool TypeFloat::CompareNotEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.float_ != right.value_.float_);
 }
 
 CmpBool TypeFloat::CompareLessThan(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.float_ < right.value_.float_);
 }
 
 CmpBool TypeFloat::CompareLessThanEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.float_ <= right.value_.float_);
 }
 
 CmpBool TypeFloat::CompareGreaterThan(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.float_ > right.value_.float_);
 }
 
 CmpBool TypeFloat::CompareGreaterThanEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(left.value_.float_ >= right.value_.float_);
 }
 
@@ -251,9 +237,8 @@ uint32_t TypeChar::DeserializeFrom(char *storage, Field **field, bool is_null, M
 }
 
 uint32_t TypeChar::GetSerializedSize(const Field &field, bool is_null) const {
-  if (is_null) {
+  if (is_null) 
     return 0;
-  }
   uint32_t len = GetLength(field);
   return len + sizeof(uint32_t);
 }
@@ -276,9 +261,8 @@ CmpBool TypeChar::CompareEquals(const Field &left, const Field &right) const {
 
 CmpBool TypeChar::CompareNotEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(CompareStrings(left.GetData(), left.GetLength(), right.GetData(), right.GetLength()) != 0);
 }
 
@@ -292,24 +276,21 @@ CmpBool TypeChar::CompareLessThan(const Field &left, const Field &right) const {
 
 CmpBool TypeChar::CompareLessThanEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(CompareStrings(left.GetData(), left.GetLength(), right.GetData(), right.GetLength()) <= 0);
 }
 
 CmpBool TypeChar::CompareGreaterThan(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(CompareStrings(left.GetData(), left.GetLength(), right.GetData(), right.GetLength()) > 0);
 }
 
 CmpBool TypeChar::CompareGreaterThanEquals(const Field &left, const Field &right) const {
   ASSERT(left.CheckComparable(right), "Not comparable.");
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
     return CmpBool::kNull;
-  }
   return GetCmpBool(CompareStrings(left.GetData(), left.GetLength(), right.GetData(), right.GetLength()) >= 0);
 }
