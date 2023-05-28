@@ -1,20 +1,22 @@
 #ifndef MINISQL_TYPES_H
 #define MINISQL_TYPES_H
 
-#include <cmath>
 #include <cstdint>
+#include <cmath>
 #include <exception>
-
-#include "common/config.h"
 #include "record/type_id.h"
+#include "common/config.h"
+#include "utils/mem_heap.h"
 
 class Field;
 
-enum CmpBool { kFalse = 0, kTrue, kNull };
+enum CmpBool {
+  kFalse = 0,
+  kTrue,
+  kNull
+};
 
-inline CmpBool GetCmpBool(bool boolean) {
-  return boolean ? CmpBool::kTrue : CmpBool::kFalse;
-}
+inline CmpBool GetCmpBool(bool boolean) { return boolean ? CmpBool::kTrue : CmpBool::kFalse; }
 
 class Type {
  public:
@@ -44,7 +46,7 @@ class Type {
   virtual uint32_t SerializeTo(const Field &field, char *buf) const;
 
   // Deserialize a field of the given type from the given storage space.
-  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null) const;
+  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null, MemHeap *heap) const;
 
   // Get serialize size of a field
   virtual uint32_t GetSerializedSize(const Field &field, bool is_null) const;
@@ -73,12 +75,12 @@ class Type {
 };
 
 class TypeInt : public Type {
- public:
+public:
   explicit TypeInt() : Type(TypeId::kTypeInt) {}
 
   virtual uint32_t SerializeTo(const Field &field, char *buf) const override;
 
-  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null) const override;
+  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null, MemHeap *heap) const override;
 
   virtual uint32_t GetSerializedSize(const Field &field, bool is_null) const override;
 
@@ -96,12 +98,12 @@ class TypeInt : public Type {
 };
 
 class TypeChar : public Type {
- public:
+public:
   explicit TypeChar() : Type(TypeId::kTypeChar) {}
 
   virtual uint32_t SerializeTo(const Field &field, char *buf) const override;
 
-  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null) const override;
+  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null, MemHeap *heap) const override;
 
   virtual uint32_t GetSerializedSize(const Field &field, bool is_null) const override;
 
@@ -123,12 +125,12 @@ class TypeChar : public Type {
 };
 
 class TypeFloat : public Type {
- public:
+public:
   explicit TypeFloat() : Type(TypeId::kTypeFloat) {}
 
   virtual uint32_t SerializeTo(const Field &field, char *buf) const override;
 
-  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null) const override;
+  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null, MemHeap *heap) const override;
 
   virtual uint32_t GetSerializedSize(const Field &field, bool is_null) const override;
 
@@ -145,4 +147,5 @@ class TypeFloat : public Type {
   virtual CmpBool CompareGreaterThanEquals(const Field &left, const Field &right) const override;
 };
 
-#endif  // MINISQL_TYPES_H
+
+#endif //MINISQL_TYPES_H
