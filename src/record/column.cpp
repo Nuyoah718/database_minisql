@@ -143,6 +143,7 @@ uint32_t Column::GetSerializedSize() const
   return sizeof(uint32_t) + sizeof(uint32_t) + name_length + sizeof(TypeId) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(bool) + sizeof(bool);
 }
 
+
 /**
  * TODO: Student Implement
  */
