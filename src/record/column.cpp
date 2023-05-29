@@ -136,17 +136,6 @@ uint32_t Column::SerializeTo(char *buf) const
 /**
  * TODO: Student Implement
  */
-//获取Column对象序列化后的大小
-uint32_t Column::GetSerializedSize() const
-{
-  uint32_t name_length = name_.size() * sizeof(char);
-  return sizeof(uint32_t) + sizeof(uint32_t) + name_length + sizeof(TypeId) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(bool) + sizeof(bool);
-}
-
-
-/**
- * TODO: Student Implement
- */
 //从缓冲区中反序列化出一个Column对象
 uint32_t Column::DeserializeFrom(char *buf, Column *&column)
 {
@@ -192,4 +181,15 @@ uint32_t Column::DeserializeFrom(char *buf, Column *&column)
 
   //返回从缓冲区中读取的字节数
   return offset;
+}
+
+
+/**
+ * TODO: Student Implement
+ */
+//获取Column对象序列化后的大小
+uint32_t Column::GetSerializedSize() const
+{
+  uint32_t name_length = name_.size() * sizeof(char);
+  return sizeof(uint32_t) + sizeof(uint32_t) + name_length + sizeof(TypeId) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(bool) + sizeof(bool);
 }
