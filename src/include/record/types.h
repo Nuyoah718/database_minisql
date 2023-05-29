@@ -6,15 +6,10 @@
 #include <exception>
 #include "record/type_id.h"
 #include "common/config.h"
-#include "utils/mem_heap.h"
 
 class Field;
 
-enum CmpBool {
-  kFalse = 0,
-  kTrue,
-  kNull
-};
+enum CmpBool { kFalse = 0, kTrue, kNull };
 
 inline CmpBool GetCmpBool(bool boolean) { return boolean ? CmpBool::kTrue : CmpBool::kFalse; }
 
@@ -46,7 +41,7 @@ class Type {
   virtual uint32_t SerializeTo(const Field &field, char *buf) const;
 
   // Deserialize a field of the given type from the given storage space.
-  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null, MemHeap *heap) const;
+  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null) const;
 
   // Get serialize size of a field
   virtual uint32_t GetSerializedSize(const Field &field, bool is_null) const;
@@ -80,7 +75,7 @@ public:
 
   virtual uint32_t SerializeTo(const Field &field, char *buf) const override;
 
-  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null, MemHeap *heap) const override;
+  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null) const override;
 
   virtual uint32_t GetSerializedSize(const Field &field, bool is_null) const override;
 
@@ -103,7 +98,7 @@ public:
 
   virtual uint32_t SerializeTo(const Field &field, char *buf) const override;
 
-  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null, MemHeap *heap) const override;
+  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null) const override;
 
   virtual uint32_t GetSerializedSize(const Field &field, bool is_null) const override;
 
@@ -130,7 +125,7 @@ public:
 
   virtual uint32_t SerializeTo(const Field &field, char *buf) const override;
 
-  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null, MemHeap *heap) const override;
+  virtual uint32_t DeserializeFrom(char *storage, Field **field, bool is_null) const override;
 
   virtual uint32_t GetSerializedSize(const Field &field, bool is_null) const override;
 
@@ -146,6 +141,5 @@ public:
 
   virtual CmpBool CompareGreaterThanEquals(const Field &left, const Field &right) const override;
 };
-
 
 #endif //MINISQL_TYPES_H
