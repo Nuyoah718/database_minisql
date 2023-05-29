@@ -7,34 +7,30 @@
 
 class TableHeap;
 
-class TableIterator 
+class TableIterator
 {
- private:
-  explicit TableIterator() = default;
-
- public:
+ public:    //公有成员
+  //构造函数和析构函数
   explicit TableIterator(TableHeap *table_heap, RowId rid, Transaction *txn);
-
   TableIterator(const TableIterator &other);
-
   virtual ~TableIterator();
 
-  bool operator==(const TableIterator &itr) const;
+  //运算符重载
+  bool operator==(const TableIterator &itr) const;    //检查两个迭代器是否相等
+  bool operator!=(const TableIterator &itr) const;    //检查两个迭代器是否不相等
+  const Row &operator*();                             //解引用运算符
+  Row *operator->();                                  //成员访问运算符符
+  TableIterator &operator++();                        //前自增运算符
+  const TableIterator operator++(int);                //后自增运算符
 
-  bool operator!=(const TableIterator &itr) const;
+ private:    //私有成员
+  //成员变量
+  TableHeap *table_heap{};    //指向TableHeap对象的指针
+  Row *row{};                 //指向表中当前行的指针
+  Transaction *txn{};         //指向当前事务的指针
 
-  const Row &operator*();
-
-  Row *operator->();
-
-  TableIterator &operator++();
-
-  TableIterator operator++(int);
-
- private:
-  TableHeap *table_heap;
-  Row *row;
-  Transaction *txn; 
+  //私有默认构造函数，以防止实例化没有必要的参数
+  explicit TableIterator() = default;
 };
 
-#endif //MINISQL_TABLE_ITERATOR_H
+#endif    //MINISQL_TABLE_ITERATOR_H
