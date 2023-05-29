@@ -56,7 +56,7 @@ TEST(TupleTest, FieldSerializeDeserializeTest) {
   uint32_t ofs = 0;
   Field *df = nullptr;
   for (int i = 0; i < 4; i++) {
-    ofs += Field::DeserializeFrom(buffer + ofs, TypeId::kTypeInt, &df, false, heap);
+    ofs += Field::DeserializeFrom(buffer + ofs, TypeId::kTypeInt, &df, false);
     EXPECT_EQ(CmpBool::kTrue, df->CompareEquals(int_fields[i]));
     EXPECT_EQ(CmpBool::kFalse, df->CompareEquals(int_fields[4]));
     EXPECT_EQ(CmpBool::kNull, df->CompareEquals(null_fields[0]));
@@ -66,7 +66,7 @@ TEST(TupleTest, FieldSerializeDeserializeTest) {
     df = nullptr;
   }
   for (int i = 0; i < 3; i++) {
-    ofs += Field::DeserializeFrom(buffer + ofs, TypeId::kTypeFloat, &df, false, heap);
+    ofs += Field::DeserializeFrom(buffer + ofs, TypeId::kTypeFloat, &df, false);
     EXPECT_EQ(CmpBool::kTrue, df->CompareEquals(float_fields[i]));
     EXPECT_EQ(CmpBool::kFalse, df->CompareEquals(float_fields[3]));
     EXPECT_EQ(CmpBool::kNull, df->CompareEquals(null_fields[1]));
@@ -76,7 +76,7 @@ TEST(TupleTest, FieldSerializeDeserializeTest) {
     df = nullptr;
   }
   for (int i = 0; i < 3; i++) {
-    ofs += Field::DeserializeFrom(buffer + ofs, TypeId::kTypeChar, &df, false, heap);
+    ofs += Field::DeserializeFrom(buffer + ofs, TypeId::kTypeChar, &df, false);
     EXPECT_EQ(CmpBool::kTrue, df->CompareEquals(char_fields[i]));
     EXPECT_EQ(CmpBool::kFalse, df->CompareEquals(char_fields[3]));
     EXPECT_EQ(CmpBool::kNull, df->CompareEquals(null_fields[2]));
@@ -109,7 +109,7 @@ TEST(TupleTest, ColumnSerializeDeserializeTest) {
   uint32_t ofs = 0;
   Column *df = nullptr;
   for (int i = 0; i < 3; i++) {
-    ofs += Column::DeserializeFrom(buffer + ofs, df, heap);
+    ofs += Column::DeserializeFrom(buffer + ofs, df);
     EXPECT_EQ(df->GetName(), attrs[i].GetName());
     EXPECT_EQ(df->GetType(), attrs[i].GetType());
     EXPECT_EQ(df->GetTableInd(), attrs[i].GetTableInd());
