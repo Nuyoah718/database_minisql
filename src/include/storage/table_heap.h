@@ -8,23 +8,21 @@
 #include "transaction/lock_manager.h"
 #include "transaction/log_manager.h"
 
-class TableHeap 
+class TableHeap
 {
   friend class TableIterator;
 
  public:
-  static TableHeap *Create(BufferPoolManager *buffer_pool_manager, Schema *schema, Transaction *txn,
-                           LogManager *log_manager, LockManager *lock_manager) {
+  static TableHeap *Create(BufferPoolManager *buffer_pool_manager, Schema *schema, Transaction *txn, LogManager *log_manager, LockManager *lock_manager) 
+  {
     return new TableHeap(buffer_pool_manager, schema, txn, log_manager, lock_manager);
   }
 
-  static TableHeap *Create(BufferPoolManager *buffer_pool_manager, page_id_t first_page_id, Schema *schema,
-                           LogManager *log_manager, LockManager *lock_manager) {
+  static TableHeap *Create(BufferPoolManager *buffer_pool_manager, page_id_t first_page_id, Schema *schema, LogManager *log_manager, LockManager *lock_manager) {
     return new TableHeap(buffer_pool_manager, first_page_id, schema, log_manager, lock_manager);
   }
 
   ~TableHeap() = default;
-
   /**
    * Insert a tuple into the table. If the tuple is too large (>= page_size), return false.
    * @param[in/out] row Tuple Row to insert, the rid of the inserted tuple is wrapped in object row
@@ -74,7 +72,8 @@ class TableHeap
 
   void FreeTableHeap() {
     auto next_page_id = first_page_id_;
-    while (next_page_id != INVALID_PAGE_ID) {
+    while (next_page_id != INVALID_PAGE_ID) 
+    {
       auto old_page_id = next_page_id;
       auto page = reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(old_page_id));
       assert(page != nullptr);
@@ -108,20 +107,19 @@ class TableHeap
   /**
    * create table heap and initialize first page
    */
-  explicit TableHeap(BufferPoolManager *buffer_pool_manager, Schema *schema, Transaction *txn,
-                     LogManager *log_manager, LockManager *lock_manager) :
-                         buffer_pool_manager_(buffer_pool_manager),
-                         schema_(schema),
-                         log_manager_(log_manager),
-                         lock_manager_(lock_manager) { ASSERT(false, "Not implemented yet."); };
+  explicit TableHeap(BufferPoolManager *buffer_pool_manager, Schema *schema, Transaction *txn, LogManager *log_manager, LockManager *lock_manager) :
+      buffer_pool_manager_(buffer_pool_manager),
+      schema_(schema),
+      log_manager_(log_manager),
+      lock_manager_(lock_manager) { ASSERT(false, "Not implemented yet."); 
+  };
 
-  explicit TableHeap(BufferPoolManager *buffer_pool_manager, page_id_t first_page_id, Schema *schema,
-                     LogManager *log_manager, LockManager *lock_manager)
-      : buffer_pool_manager_(buffer_pool_manager),
-        first_page_id_(first_page_id),
-        schema_(schema),
-        log_manager_(log_manager),
-        lock_manager_(lock_manager) {}
+  explicit TableHeap(BufferPoolManager *buffer_pool_manager, page_id_t first_page_id, Schema *schema, LogManager *log_manager, LockManager *lock_manager): 
+      buffer_pool_manager_(buffer_pool_manager),
+      first_page_id_(first_page_id),
+      schema_(schema),
+      log_manager_(log_manager),
+      lock_manager_(lock_manager) {}
 
  private:
   BufferPoolManager *buffer_pool_manager_;
