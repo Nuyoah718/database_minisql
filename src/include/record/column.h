@@ -49,11 +49,11 @@ class Column
   static void WriteUint32(char *buf, uint32_t value) ;
   static void WriteBool(char *buf, bool value) ;
   static void WriteTypeId(char *buf, TypeId value) ;
-  static void WriteString(char *buf, const string &value) ;
+  static void WriteString(char *buf, const std::string &value) ;
   static uint32_t ReadUint32(const char *buf);
   static bool ReadBool(const char *buf);
   static TypeId ReadTypeId(const char *buf);
-  static string ReadString(const char *buf);
+  static std::string ReadString(const char *buf);
 };
 
 #endif    //MINISQL_COLUMN_H
