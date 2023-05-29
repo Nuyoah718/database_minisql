@@ -18,6 +18,10 @@ uint32_t Schema::SerializeTo(char *buf) const
   return ofs;    //返回序列化后的字节数
 }
 
+
+/**
+ * TODO: Student Implement
+ */
 //获取Schema对象序列化后的字节数
 uint32_t Schema::GetSerializedSize() const
 {
@@ -31,6 +35,10 @@ uint32_t Schema::GetSerializedSize() const
   return size + 2 * sizeof(uint32_t);
 }
 
+
+/**
+ * TODO: Student Implement
+ */
 //从buf中反序列化出Schema对象，并将其赋值给传入的指针schema，并返回反序列化后的字节数
 uint32_t Schema::DeserializeFrom(char *buf, Schema *&schema)
 {
