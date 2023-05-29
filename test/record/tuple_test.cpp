@@ -49,8 +49,8 @@ TEST(TupleTest, FieldSerializeDeserializeTest) {
   for (int i = 0; i < 3; i++) {
     p += float_fields[i].SerializeTo(p);
   }
-  for (int i = 0; i < 4; i++) {
-    p += char_fields[i].SerializeTo(p);
+  for (const auto & char_field : char_fields) {
+    p += char_field.SerializeTo(p);
   }
   // Deserialize phase
   uint32_t ofs = 0;
@@ -103,18 +103,18 @@ TEST(TupleTest, ColumnSerializeDeserializeTest) {
   char *p = buffer;
   MemHeap *heap = new SimpleMemHeap();
 
-  for (int i = 0; i < 3; i++) p += attrs[i].SerializeTo(p);
+  for (const auto & attr : attrs) p += attr.SerializeTo(p);
 
   // Deserialize phase
   uint32_t ofs = 0;
   Column *df = nullptr;
-  for (int i = 0; i < 3; i++) {
+  for (const auto & attr : attrs) {
     ofs += Column::DeserializeFrom(buffer + ofs, df);
-    EXPECT_EQ(df->GetName(), attrs[i].GetName());
-    EXPECT_EQ(df->GetType(), attrs[i].GetType());
-    EXPECT_EQ(df->GetTableInd(), attrs[i].GetTableInd());
-    EXPECT_EQ(df->IsNullable(), attrs[i].IsNullable());
-    EXPECT_EQ(df->IsUnique(), attrs[i].IsUnique());
+    EXPECT_EQ(df->GetName(), attr.GetName());
+    EXPECT_EQ(df->GetType(), attr.GetType());
+    EXPECT_EQ(df->GetTableInd(), attr.GetTableInd());
+    EXPECT_EQ(df->IsNullable(), attr.IsNullable());
+    EXPECT_EQ(df->IsUnique(), attr.IsUnique());
   }
 }
 
