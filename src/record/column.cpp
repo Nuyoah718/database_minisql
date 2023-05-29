@@ -5,7 +5,8 @@
 Column::Column(std::string column_name, TypeId type, uint32_t index, bool nullable, bool unique)
     : name_(std::move(column_name)), type_(type), table_ind_(index), nullable_(nullable), unique_(unique) {
   ASSERT(type != TypeId::kTypeChar, "Wrong constructor for CHAR type.");
-  switch (type) {
+  switch (type)
+  {
     case TypeId::kTypeInt:
       len_ = sizeof(int32_t);
       break;
@@ -57,7 +58,8 @@ void Column::WriteString(char *buf, const std::string &value)
   const char *str = value.c_str();
   uint32_t len = value.size() * sizeof(char);
   WriteUint32(buf, len);
-  memcpy(buf + sizeof(uint32_t), str, len);
+  strncpy(buf + sizeof(uint32_t), str, len);
+  buf[len] = '\0';
 }
 
 //从缓冲区读取32位无符号整数
