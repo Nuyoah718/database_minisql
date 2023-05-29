@@ -18,7 +18,6 @@
  **/
 
 #include <cstring>
-
 #include "common/macros.h"
 #include "common/rowid.h"
 #include "page/page.h"
@@ -28,6 +27,9 @@
 #include "transaction/transaction.h"
 
 class TablePage : public Page {
+ public:
+  enum class RetState { ILLEGAL_CALL, INSUFFICIENT_TABLE_PAGE,DOUBLE_DELETE,SUCCESS };
+
  public:
   void Init(page_id_t page_id, page_id_t prev_id, LogManager *log_mgr, Transaction *txn);
 
@@ -49,8 +51,8 @@ class TablePage : public Page {
 
   bool MarkDelete(const RowId &rid, Transaction *txn, LockManager *lock_manager, LogManager *log_manager);
 
-  bool UpdateTuple(const Row &new_row, Row *old_row, Schema *schema, Transaction *txn, LockManager *lock_manager,
-                   LogManager *log_manager);
+  RetState UpdateTuple(const Row &new_row, Row *old_row, Schema *schema, Transaction *txn, LockManager *lock_manager,
+                       LogManager *log_manager);
 
   void ApplyDelete(const RowId &rid, Transaction *txn, LogManager *log_manager);
 
@@ -62,7 +64,7 @@ class TablePage : public Page {
 
   bool GetNextTupleRid(const RowId &cur_rid, RowId *next_rid);
 
- private:
+ public:
   uint32_t GetFreeSpacePointer() { return *reinterpret_cast<uint32_t *>(GetData() + OFFSET_FREE_SPACE); }
 
   void SetFreeSpacePointer(uint32_t free_space_pointer) {
