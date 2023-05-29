@@ -41,11 +41,11 @@ class Column
   static constexpr uint32_t COLUMN_MAGIC_NUM = 210928;
   std::string name_;
   TypeId type_;
-  uint32_t len_{0};  // for char type this is the maximum byte length of the string data,
-  // otherwise is the fixed size
-  uint32_t table_ind_{0};  // column position in table
-  bool nullable_{false};   // whether the column can be null
-  bool unique_{false};     // whether the column is unique
+  uint32_t len_{0};    //for char type this is the maximum byte length of the string data,
+  //otherwise is the fixed size
+  uint32_t table_ind_{0};    //column position in table
+  bool nullable_{false};    //whether the column can be null
+  bool unique_{false};    //whether the column is unique
   static void WriteUint32(char *buf, uint32_t value) ;
   static void WriteBool(char *buf, bool value) ;
   static void WriteTypeId(char *buf, TypeId value) ;
@@ -56,4 +56,4 @@ class Column
   static string ReadString(const char *buf);
 };
 
-#endif  // MINISQL_COLUMN_H
+#endif    //MINISQL_COLUMN_H
