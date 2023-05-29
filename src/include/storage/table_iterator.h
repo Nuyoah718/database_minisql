@@ -9,7 +9,7 @@ class TableHeap;
 
 class TableIterator
 {
- public:    //公有成员
+ public:
   //构造函数和析构函数
   explicit TableIterator(TableHeap *table_heap, RowId rid, Transaction *txn);
   TableIterator(const TableIterator &other);
@@ -23,7 +23,7 @@ class TableIterator
   TableIterator &operator++();                        //前自增运算符
   const TableIterator operator++(int);                //后自增运算符
 
- private:    //私有成员
+ private:  
   //成员变量
   TableHeap *table_heap{};    //指向TableHeap对象的指针
   Row *row{};                 //指向表中当前行的指针
