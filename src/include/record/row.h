@@ -8,6 +8,7 @@
 #include "common/rowid.h"
 #include "record/field.h"
 #include "record/schema.h"
+#include "utils/mem_heap.h"
 
 /**
  *  Row format:
@@ -111,7 +112,11 @@ class Row
   inline size_t GetFieldCount() const { return fields_.size(); }
 
  private:
+  static constexpr uint32_t ROW_MAGIC_NUM = 210928;
   RowId rid_{};
+  MemHeap *heap_{nullptr};
+  uint32_t fields_nums{0};
+  uint32_t null_nums{0};
   std::vector<Field *> fields_; /** Make sure that all field ptr are destructed*/
 };
 
