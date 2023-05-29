@@ -8,7 +8,8 @@
 #include "transaction/lock_manager.h"
 #include "transaction/log_manager.h"
 
-class TableHeap {
+class TableHeap 
+{
   friend class TableIterator;
 
  public:
@@ -101,7 +102,7 @@ class TableHeap {
   /**
    * @return the id of the first page of this table
    */
-  inline page_id_t GetFirstPageId() const { return first_page_id_; }
+  [[nodiscard]] inline page_id_t GetFirstPageId() const { return first_page_id_; }
 
  private:
   /**
@@ -109,12 +110,10 @@ class TableHeap {
    */
   explicit TableHeap(BufferPoolManager *buffer_pool_manager, Schema *schema, Transaction *txn,
                      LogManager *log_manager, LockManager *lock_manager) :
-                                                                           buffer_pool_manager_(buffer_pool_manager),
-                                                                           schema_(schema),
-                                                                           log_manager_(log_manager),
-                                                                           lock_manager_(lock_manager) {
-    ASSERT(false, "Not implemented yet.");
-  };
+                         buffer_pool_manager_(buffer_pool_manager),
+                         schema_(schema),
+                         log_manager_(log_manager),
+                         lock_manager_(lock_manager) { ASSERT(false, "Not implemented yet."); };
 
   explicit TableHeap(BufferPoolManager *buffer_pool_manager, page_id_t first_page_id, Schema *schema,
                      LogManager *log_manager, LockManager *lock_manager)
@@ -132,4 +131,4 @@ class TableHeap {
   [[maybe_unused]] LockManager *lock_manager_;
 };
 
-#endif  // MINISQL_TABLE_HEAP_H
+#endif    //MINISQL_TABLE_HEAP_H
