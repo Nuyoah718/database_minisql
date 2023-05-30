@@ -57,7 +57,7 @@ TableIterator &TableIterator::operator++()
   BufferPoolManager *buffer_pool_manager = table_heap->buffer_pool_manager_;
 
   //获取当前页并对其进行读锁定
-  auto cur_page = dynamic_cast<TablePage *>(buffer_pool_manager->FetchPage(row->GetRowId().GetPageId()));
+  auto cur_page = static_cast<TablePage *>(buffer_pool_manager->FetchPage(row->GetRowId().GetPageId()));
   if (cur_page == nullptr)
     throw std::runtime_error("Failed to fetch page from buffer pool manager");
   cur_page->RLatch();
@@ -69,7 +69,7 @@ TableIterator &TableIterator::operator++()
     //如果当前页有下一个元组或者是下一页的第一个元组，则跳出循环
     if (cur_page->GetNextTupleRid(row->GetRowId(), &next_tuple_rid) ||
         (cur_page->GetNextPageId() != INVALID_PAGE_ID &&
-         (cur_page = dynamic_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()))) != nullptr &&
+         (cur_page = static_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()))) != nullptr &&
          cur_page->GetFirstTupleRid(&next_tuple_rid)))
     {
       break;
@@ -99,7 +99,6 @@ TableIterator &TableIterator::operator++()
 
 TableIterator TableIterator::operator++(int)
 {
-
   TableIterator clone(*this);    //先保存当前迭代器状态，再执行自增，最后返回保存的旧状态
   this->operator++();
   return clone;
