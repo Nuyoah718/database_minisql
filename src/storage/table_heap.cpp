@@ -92,49 +92,49 @@ void TableHeap::FreeHeap()
 //将RowId为rid的记录old_row替换成新的记录new_row，并将new_row的RowId通过new_row.rid_返回
 bool TableHeap::UpdateTuple(const Row &row, const RowId &rid, Transaction *txn)
 {
+  //根据给定的rid来获取页
   auto page = (TablePage *)buffer_pool_manager_->FetchPage(rid.GetPageId());
 
+  //判断该页是否为空
   if (page == nullptr)
     return false;
 
-  Row old_row_(row);
-  TablePage::RetState ret_state = page->UpdateTuple(row, &old_row_, schema_, txn, lock_manager_, log_manager_);
+  //获取旧的行
+  Row old_row_;
+  if (!page->GetTuple(&old_row_, schema_, txn, lock_manager_))
+  {
+    buffer_pool_manager_->UnpinPage(rid.GetPageId(), false);
+    return false;
+  }
 
-  //如果返回状态是非法调用
-  if (ret_state == TablePage::RetState::ILLEGAL_CALL)
+  //尝试更新元组
+  bool updated = page->UpdateTuple(row, &old_row_, schema_, txn, lock_manager_, log_manager_);
+
+  if (!updated)
   {
-    buffer_pool_manager_->UnpinPage(page->GetTablePageId(), false);
-    return false;
-  }
-  //如果返回状态是表页不足
-  else if (ret_state == TablePage::RetState::INSUFFICIENT_TABLE_PAGE)
-  {
-    //对旧行执行删除
-    MarkDelete(rid, txn);
-    //执行插入操作
-    InsertTuple(old_row_, txn);
-    buffer_pool_manager_->UnpinPage(old_row_.GetRowId().GetPageId(), true);
+    //如果更新失败，标记删除旧行并插入新行
+    if (!MarkDelete(rid, txn))
+    {
+      buffer_pool_manager_->UnpinPage(rid.GetPageId(), false);
+      return false;
+    }
+    Row row_copy = row;
+    if (!InsertTuple(row_copy, txn))
+    {
+      //但如果插入操作失败，可能会导致数据丢失
+      buffer_pool_manager_->UnpinPage(rid.GetPageId(), false);
+      return false;
+    }
+    buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);
     return true;
   }
-  //如果返回状态是重复删除
-  else if (ret_state == TablePage::RetState::DOUBLE_DELETE)
-  {
-    buffer_pool_manager_->UnpinPage(page->GetTablePageId(), false);
-    return false;
-  }
-  //如果返回状态成功
-  else if (ret_state == TablePage::RetState::SUCCESS)
-  {
-    buffer_pool_manager_->UnpinPage(page->GetTablePageId(), true);
-    return true;
-  }
-  //其他情况
   else
   {
-    return false;
+    //如果更新成功，解除固定页面并返回true
+    buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);
+    return true;
   }
 }
-
 
 
 /**
