@@ -21,7 +21,7 @@ class TableIterator
   const Row &operator*();                             //解引用运算符
   Row *operator->();                                  //成员访问运算符符
   TableIterator &operator++();                        //前自增运算符
-  const TableIterator operator++(int);                //后自增运算符
+  TableIterator operator++(int);                //后自增运算符
   TableIterator &operator=(const TableIterator &itr) noexcept;
 
  private:
