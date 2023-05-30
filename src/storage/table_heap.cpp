@@ -44,7 +44,7 @@ bool TableHeap::InsertTuple(Row &row, Transaction *txn)
         return false;
       }
 
-      //初始化新页面并更新当前页面的下一页 ID
+      //初始化新页面并更新当前页面下一页 ID
       new_page->Init(next_page_id, cur_page->GetTablePageId(), log_manager_, txn);
       cur_page->SetNextPageId(next_page_id);
 
@@ -89,37 +89,52 @@ void TableHeap::FreeHeap()
 /**
  * TODO: Student Implement
  */
-UpdateTupleUpdateTuple
 //将RowId为rid的记录old_row替换成新的记录new_row，并将new_row的RowId通过new_row.rid_返回
-bool TableHeap::UpdateTuple(const Row &row, const RowId &rid, Transaction *txn) {
+bool TableHeap::UpdateTuple(const Row &row, const RowId &rid, Transaction *txn)
+{
   auto page = (TablePage *)buffer_pool_manager_->FetchPage(rid.GetPageId());
 
-  if (page == nullptr) return false;
+  if (page == nullptr)
+    return false;
 
   Row old_row_(row);
   TablePage::RetState ret_state = page->UpdateTuple(row, &old_row_, schema_, txn, lock_manager_, log_manager_);
 
-  switch (ret_state) {
-    case TablePage::RetState::ILLEGAL_CALL:
-      buffer_pool_manager_->UnpinPage(page->GetTablePageId(), false);
-      return false;
-    case TablePage::RetState::INSUFFICIENT_TABLE_PAGE:
-      // do deletion on old row
-      MarkDelete(rid, txn);
-      // do insertion
-      InsertTuple(old_row_, txn);
-      buffer_pool_manager_->UnpinPage(old_row_.GetRowId().GetPageId(), true);
-      return true;
-    case TablePage::RetState::DOUBLE_DELETE:
-      buffer_pool_manager_->UnpinPage(page->GetTablePageId(), false);
-      return false;
-    case TablePage::RetState::SUCCESS:
-      buffer_pool_manager_->UnpinPage(page->GetTablePageId(), true);
-      return true;
-    default:
-      return false;
+  //如果返回状态是非法调用
+  if (ret_state == TablePage::RetState::ILLEGAL_CALL)
+  {
+    buffer_pool_manager_->UnpinPage(page->GetTablePageId(), false);
+    return false;
+  }
+  //如果返回状态是表页不足
+  else if (ret_state == TablePage::RetState::INSUFFICIENT_TABLE_PAGE)
+  {
+    //对旧行执行删除
+    MarkDelete(rid, txn);
+    //执行插入操作
+    InsertTuple(old_row_, txn);
+    buffer_pool_manager_->UnpinPage(old_row_.GetRowId().GetPageId(), true);
+    return true;
+  }
+  //如果返回状态是重复删除
+  else if (ret_state == TablePage::RetState::DOUBLE_DELETE)
+  {
+    buffer_pool_manager_->UnpinPage(page->GetTablePageId(), false);
+    return false;
+  }
+  //如果返回状态成功
+  else if (ret_state == TablePage::RetState::SUCCESS)
+  {
+    buffer_pool_manager_->UnpinPage(page->GetTablePageId(), true);
+    return true;
+  }
+  //其他情况
+  else
+  {
+    return false;
   }
 }
+
 
 
 /**
@@ -168,7 +183,6 @@ bool TableHeap::GetTuple(Row *row, Transaction *txn)
 
   return success;
 }
-
 
 void TableHeap::DeleteTable(page_id_t page_id)
 {
