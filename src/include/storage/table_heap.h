@@ -111,8 +111,7 @@ class TableHeap
       buffer_pool_manager_(buffer_pool_manager),
       schema_(schema),
       log_manager_(log_manager),
-      lock_manager_(lock_manager) { ASSERT(false, "Not implemented yet.");
-  };
+      lock_manager_(lock_manager) {};
 
   explicit TableHeap(BufferPoolManager *buffer_pool_manager, page_id_t first_page_id, Schema *schema, LogManager *log_manager, LockManager *lock_manager):
       buffer_pool_manager_(buffer_pool_manager),
