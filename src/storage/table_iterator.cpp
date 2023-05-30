@@ -66,7 +66,7 @@ TableIterator &TableIterator::operator++()
   RowId next_tuple_rid;
   while (true)
   {
-    //如果当前页有下一个元组或者是下一页的第一个元组，跳出循环
+    //如果当前页有下一个元组或者是下一页的第一个元组，则跳出循环
     if (cur_page->GetNextTupleRid(row->GetRowId(), &next_tuple_rid) ||
         (cur_page->GetNextPageId() != INVALID_PAGE_ID &&
          (cur_page = dynamic_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()))) != nullptr &&
@@ -74,13 +74,15 @@ TableIterator &TableIterator::operator++()
     {
       break;
     }
-    //否则，尝试到下一页去寻找
+
+    //否则尝试到下一页去寻找
     if (cur_page->GetNextPageId() == INVALID_PAGE_ID)
       throw std::runtime_error("Failed to find next tuple");
     cur_page->RUnlatch();
     buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
     cur_page->RLatch();
   }
+
   //为下一个元组创建行
   row = new Row(next_tuple_rid);
 
@@ -91,7 +93,6 @@ TableIterator &TableIterator::operator++()
   //解锁并取消固定当前页
   cur_page->RUnlatch();
   buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
-
 
   return *this;    //返回自身引用
 }
