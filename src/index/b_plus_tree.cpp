@@ -88,6 +88,13 @@ void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
  * keys return false, otherwise return true.
  */
 bool BPlusTree::InsertIntoLeaf(GenericKey *key, const RowId &value, Transaction *transaction) {
+  std::vector<RowId> tmpRes;
+  if (GetValue(key, tmpRes)) {
+    // duplicate key, return false
+    return false;
+  }
+
+  /* todo(Tao): insert operation, split... */
   return false;
 }
 
