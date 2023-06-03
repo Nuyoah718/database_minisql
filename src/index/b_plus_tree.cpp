@@ -52,7 +52,12 @@ bool BPlusTree::GetValue(const GenericKey *key, std::vector<RowId> &result, Tran
  * keys return false, otherwise return true.
  */
 bool BPlusTree::Insert(GenericKey *key, const RowId &value, Transaction *transaction) {
-  return false;
+  if (IsEmpty()) {
+    StartNewTree(key, value);
+    return true;
+  }
+  
+  return InsertIntoLeaf(key, value);
 }
 /*
  * Insert constant key & value pair into an empty tree
