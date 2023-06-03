@@ -66,6 +66,17 @@ bool BPlusTree::Insert(GenericKey *key, const RowId &value, Transaction *transac
  * tree's root page id and insert entry directly into leaf page.
  */
 void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
+  page_id_t id;
+  auto *new_page = buffer_pool_manager_->NewPage(id);
+  ASSERT(new_page == nullptr, "out of memory"); // exception
+
+  auto *root_page = reinterpret_cast<BPlusTreeLeafPage *>(new_page->GetData());
+  root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), leaf_max_size_);
+  root_page_id_ = id;
+  InsertIntoLeaf(key, value);
+
+  /* pending: need to Unpin manually? */
+  // buffer_pool_manager_->UnpinPage(id, true);
 }
 
 /*
