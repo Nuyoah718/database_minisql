@@ -66,7 +66,24 @@ void InternalPage::PairCopy(void *dest, void *src, int pair_num) {
  * 用了二分查找
  */
 page_id_t InternalPage::Lookup(const GenericKey *key, const KeyManager &KM) {
-  return INVALID_PAGE_ID;
+  int size = GetSize();
+  if (size < 1) {
+    return INVALID_PAGE_ID;
+  }
+
+  // binary search, [l, r)
+  int l = 1, r = size, m = l + (r - l) / 2;
+  while (l < r) {
+    if (KM.CompareKeys(key, KeyAt(m)) == 0) {
+      break;
+    } else if (KM.CompareKeys(key, KeyAt(m)) > 0) {
+      l = m + 1;
+    } else {
+      r = m;
+    }
+  }
+
+  return (KM.CompareKeys(key, KeyAt(m)) == 0)? ValueAt(m) : INVALID_FRAME_ID;
 }
 
 /*****************************************************************************
