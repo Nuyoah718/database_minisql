@@ -140,9 +140,11 @@ void InternalPage::Remove(int index) {
   int size = GetSize();
   ASSERT(index >= 0 && index < size, "index not in [0, num_pairs)");
 
-  for (int i = index; i < size - 1; ++i) {
-    SetKeyAt(i, KeyAt(i + 1));
-    SetValueAt(i, ValueAt(i + 1));
+  if (index < size - 1) {
+    int num = size - 1 - index;
+    PairCopy(PairPtrAt(index), PairPtrAt(index + 1), num);
+  } else if (index == size - 1) {
+    // do nothing, the last pair.
   }
 
   SetSize(size - 1); 
