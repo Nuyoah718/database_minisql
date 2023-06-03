@@ -136,6 +136,17 @@ void InternalPage::CopyNFrom(void *src, int size, BufferPoolManager *buffer_pool
  * NOTE: store key&value pair continuously after deletion
  */
 void InternalPage::Remove(int index) {
+  /* delete element in array: O(N) */
+  int size = GetSize();
+  ASSERT(index >= 0 && index < size, "index not in [0, num_pairs)");
+
+  for (int i = index; i < size - 1; ++i) {
+    SetKeyAt(i, KeyAt(i + 1));
+    SetValueAt(i, ValueAt(i + 1));
+  }
+
+  SetSize(size - 1); 
+  /* pending: delete the Page itself if the page becomes empty? */
 }
 
 /*
