@@ -13,15 +13,17 @@
  *****************************************************************************/
 
 /**
- * TODO: Student Implement
- */
-/**
  * Init method after creating a new leaf page
  * Including set page type, set current size to zero, set page id/parent id, set
  * next page id and set max size
  * 未初始化next_page_id
  */
-void LeafPage::Init(page_id_t page_id, page_id_t parent_id, int key_size, int max_size) {}
+void LeafPage::Init(page_id_t page_id, page_id_t parent_id, int key_size, int max_size) {
+  SetPageId(page_id);
+  SetParentPageId(parent_id);
+  SetKeySize(key_size);
+  SetMaxSize(max_size);
+}
 
 /**
  * Helper methods to set/get next page id
