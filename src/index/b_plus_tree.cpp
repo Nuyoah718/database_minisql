@@ -26,7 +26,7 @@ void BPlusTree::Destroy(page_id_t current_page_id) {
  * Helper function to decide whether current b+tree is empty
  */
 bool BPlusTree::IsEmpty() const {
-  return false;
+  return (root_page_id_ == INVALID_PAGE_ID);
 }
 
 /*****************************************************************************
