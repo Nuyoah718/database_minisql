@@ -106,6 +106,9 @@ page_id_t InternalPage::Lookup(const GenericKey *key, const KeyManager &KM) {
  * NOTE: This method is only called within InsertIntoParent()(b_plus_tree.cpp)
  */
 void InternalPage::PopulateNewRoot(const page_id_t &old_value, GenericKey *new_key, const page_id_t &new_value) {
+  SetValueAt(0,old_value);
+  SetKeyAt(1, new_key);
+  SetValueAt(1, new_value);
 }
 
 /*
@@ -114,6 +117,32 @@ void InternalPage::PopulateNewRoot(const page_id_t &old_value, GenericKey *new_k
  * @return:  new size after insertion
  */
 int InternalPage::InsertNodeAfter(const page_id_t &old_value, GenericKey *new_key, const page_id_t &new_value) {
+  int size = GetSize();
+  ASSERT(size >= 2 && size < GetMaxSize(), "InternalPage is full, cannot Insert.");
+
+  // ValueIndex: O(N) to find index
+  int old_ind = ValueIndex(old_value);
+  if (old_ind == -1) {
+    ASSERT(false, "No such old_value.");
+  }
+
+  if (old_ind < size - 1) {
+    // PairMove: O(N) to make space for insersion
+    int num = size - old_ind - 1;
+    PairMove(PairPtrAt(old_ind + 2), PairPtrAt(old_ind + 1), num);
+  } else if (old_ind == size -1) {
+    // insert to tail
+    // do nothing here
+  } else {
+    ASSERT(false, "old_ind == size. Impossible.");
+  }
+  // insert O(1)
+  SetKeyAt(old_ind + 1, new_key);
+  SetValueAt(old_ind + 1, new_value);
+
+  // size count increase
+  SetSize(size + 1);
+
   return 0;
 }
 
