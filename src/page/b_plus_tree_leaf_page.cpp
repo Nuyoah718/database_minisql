@@ -4,6 +4,12 @@
 
 #include "index/generic_key.h"
 
+/* Q: (Tao Chengjian)
+ *    Todo: determine
+ *    [zju_db] pair_size = (GetKeySize() + sizeof(RowId))
+ *    or 
+ *    pair_size = (sizeof(std::pair<GenericKey *, RowId>) )
+ */
 #define pairs_off (data_)
 #define pair_size (GetKeySize() + sizeof(RowId))
 #define key_off 0

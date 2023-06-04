@@ -71,7 +71,7 @@ void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
   ASSERT(new_page == nullptr, "out of memory"); // exception
 
   auto *root_page = reinterpret_cast<BPlusTreeLeafPage *>(new_page->GetData());
-  root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), leaf_max_size_);
+  root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE);
   root_page_id_ = id;
   InsertIntoLeaf(key, value);
 

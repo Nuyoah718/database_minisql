@@ -6,6 +6,12 @@
 #include "record/field.h"
 #include "record/row.h"
 
+/* Q: (Tao Chengjian)
+ * Todo:
+ *    key_size_            = ??
+ *    sizeof(GenericKey)   = ??
+ *    sizeof(GenericKey *) = ??
+ */
 class GenericKey {
   friend class KeyManager;
   char data[0];
