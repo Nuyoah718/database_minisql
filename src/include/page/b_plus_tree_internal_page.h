@@ -25,6 +25,9 @@
  */
 class BPlusTreeInternalPage : public BPlusTreePage {
  public:
+  // // must call "Init()" method after "create" a new node
+  // InternalPage* Create_new_internal_page(page_id_t &page_id, BufferPoolManager *bpm);
+  
   // must call initialize method after "create" a new node
   void Init(page_id_t page_id, page_id_t parent_id = INVALID_PAGE_ID, int key_size = UNDEFINED_SIZE,
             int max_size = UNDEFINED_SIZE);

@@ -19,6 +19,7 @@
  * 未初始化next_page_id
  */
 void LeafPage::Init(page_id_t page_id, page_id_t parent_id, int key_size, int max_size) {
+  /* set meta data */
   SetPageType(IndexPageType::LEAF_PAGE);
   SetSize(0);
   SetPageId(page_id);
@@ -51,6 +52,7 @@ void LeafPage::SetNextPageId(page_id_t next_page_id) {
  * 二分查找
  */
 int LeafPage::KeyIndex(const GenericKey *key, const KeyManager &KM) {
+  // todo(Tao): leave it later in "index iterator".
   return 0;
 }
 

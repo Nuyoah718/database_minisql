@@ -10,12 +10,24 @@
 /*****************************************************************************
  * HELPER METHODS AND UTILITIES
  *****************************************************************************/
+
+// /*
+//  * must call "Init()" method after "create" a new node
+//  */
+// InternalPage* InternalPage::Create_new_internal_page(page_id_t &page_id, BufferPoolManager *bpm) {
+//   auto *new_page = bpm->NewPage(page_id);
+//   auto *ret_new_page = reinterpret_cast<InternalPage *>(new_page->GetData());
+
+//   return ret_new_page;
+// }
+
 /*
  * Init method after creating a new internal page
  * Including set page type, set current size, set page id, set parent id and set
  * max page size
  */
 void InternalPage::Init(page_id_t page_id, page_id_t parent_id, int key_size, int max_size) {
+  /* set meta data */
   SetPageType(IndexPageType::INTERNAL_PAGE);
   SetSize(0);
   SetPageId(page_id);
@@ -214,6 +226,7 @@ void InternalPage::Remove(int index) {
  * NOTE: only call this method within AdjustRoot()(in b_plus_tree.cpp)
  */
 page_id_t InternalPage::RemoveAndReturnOnlyChild() {
+  // todo(Tao): leave it later. [in AdjustRoot()]
   return 0;
 }
 
