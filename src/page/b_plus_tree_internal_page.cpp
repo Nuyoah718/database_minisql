@@ -162,6 +162,18 @@ void InternalPage::MoveHalfTo(InternalPage *recipient, BufferPoolManager *buffer
  *
  */
 void InternalPage::CopyNFrom(void *src, int size, BufferPoolManager *buffer_pool_manager) {
+  /* copy from src to this InternalPage */
+  PairCopy(PairPtrAt(0), src, size);
+
+  /* change children's parent to this page */
+  for (int i = 0; i < size; ++i) {
+    page_id_t child_page_id = ValueAt(0);
+    auto *page = buffer_pool_manager->FetchPage(child_page_id);
+    auto *notype_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
+
+    // set child's parentId to this pageId.
+    notype_page->SetParentPageId(GetPageId());
+  }
 }
 
 /*****************************************************************************
