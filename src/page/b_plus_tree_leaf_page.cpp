@@ -171,6 +171,14 @@ void LeafPage::CopyNFrom(void *src, int size) {
  * If the key does not exist, then return false
  */
 bool LeafPage::Lookup(const GenericKey *key, RowId &value, const KeyManager &KM) {
+  int size = GetSize();
+  /* Linear scan: O(N) */
+  for (int i = 0; i < size; ++i) {
+    if (KM.CompareKeys(key, KeyAt(i)) == 0) {
+      value = ValueAt(i);
+      return true;
+    }
+  }
   return false;
 }
 
