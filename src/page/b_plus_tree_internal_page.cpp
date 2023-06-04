@@ -58,6 +58,10 @@ void *InternalPage::PairPtrAt(int index) {
 void InternalPage::PairCopy(void *dest, void *src, int pair_num) {
   memcpy(dest, src, pair_num * (GetKeySize() + sizeof(page_id_t)));
 }
+
+void InternalPage::PairMove(void *dest, void *src, int pair_num) {
+  memmove(dest, src, pair_num * (GetKeySize() + sizeof(page_id_t)));
+}
 /*****************************************************************************
  * LOOKUP
  *****************************************************************************/
@@ -146,7 +150,7 @@ void InternalPage::Remove(int index) {
 
   if (index < size - 1) {
     int num = size - 1 - index;
-    PairCopy(PairPtrAt(index), PairPtrAt(index + 1), num);
+    PairMove(PairPtrAt(index), PairPtrAt(index + 1), num);
   } else if (index == size - 1) {
     // do nothing, the last pair.
   }

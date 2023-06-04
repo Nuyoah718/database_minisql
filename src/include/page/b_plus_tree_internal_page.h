@@ -43,6 +43,8 @@ class BPlusTreeInternalPage : public BPlusTreePage {
 
   void PairCopy(void *dest, void *src, int pair_num = 1);
 
+  void PairMove(void *dest, void *src, int pair_num = 1);
+
   page_id_t Lookup(const GenericKey *key, const KeyManager &KP);
 
   void PopulateNewRoot(const page_id_t &old_value, GenericKey *new_key, const page_id_t &new_value);
