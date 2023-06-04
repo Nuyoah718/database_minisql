@@ -141,12 +141,23 @@ int LeafPage::Insert(GenericKey *key, const RowId &value, const KeyManager &KM) 
  * Remove half of key & value pairs from this page to "recipient" page
  */
 void LeafPage::MoveHalfTo(LeafPage *recipient) {
+  int size = GetSize();
+  int half_size = size / 2;
+
+  /* copy pair[half_size]~pair[size - 1] to recipient */
+  recipient->CopyNFrom(PairPtrAt(half_size), size - half_size);
+
+  SetSize(half_size);
 }
 
 /*
  * Copy starting from items, and copy {size} number of elements into me.
  */
 void LeafPage::CopyNFrom(void *src, int size) {
+  ASSERT(GetSize() == 0, "Recipient should be empty.");
+  /* copy from src to this InternalPage */
+  PairCopy(PairPtrAt(0), src, size);
+  SetSize(size);
 }
 
 /*****************************************************************************

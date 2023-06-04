@@ -157,11 +157,10 @@ void InternalPage::MoveHalfTo(InternalPage *recipient, BufferPoolManager *buffer
   int size = GetSize();
   int half_size = size / 2;
 
-  // copy from pair[0] to pair[half_size - 1] to recipient
-  recipient->CopyNFrom(PairPtrAt(0), half_size, buffer_pool_manager);
+  /* copy pair[half_size]~pair[size - 1] to recipient */
+  recipient->CopyNFrom(PairPtrAt(half_size), size - half_size, buffer_pool_manager);
 
-  // move pair[half_size]~pair[size - 1] to pair[0]~pair[size - 1 - half_size]
-  PairMove(PairPtrAt(0), PairPtrAt(half_size), GetSize() - half_size);
+  SetSize(half_size);
 }
 
 /* Copy entries into me, starting from {items} and copy {size} entries.
@@ -170,6 +169,7 @@ void InternalPage::MoveHalfTo(InternalPage *recipient, BufferPoolManager *buffer
  *
  */
 void InternalPage::CopyNFrom(void *src, int size, BufferPoolManager *buffer_pool_manager) {
+  ASSERT(GetSize() == 0, "Recipient should be empty.");
   /* copy from src to this InternalPage */
   PairCopy(PairPtrAt(0), src, size);
 
@@ -182,6 +182,7 @@ void InternalPage::CopyNFrom(void *src, int size, BufferPoolManager *buffer_pool
     // set child's parentId to this pageId.
     notype_page->SetParentPageId(GetPageId());
   }
+  SetSize(size);
 }
 
 /*****************************************************************************
