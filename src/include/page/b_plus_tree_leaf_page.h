@@ -56,6 +56,8 @@ class BPlusTreeLeafPage : public BPlusTreePage {
 
   void PairCopy(void *dest, void *src, int pair_num = 1);
 
+  void PairMove(void *dest, void *src, int pair_num = 1);
+
   std::pair<GenericKey *, RowId> GetItem(int index);
 
   // insert and delete methods

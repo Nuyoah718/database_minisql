@@ -82,6 +82,10 @@ void LeafPage::PairCopy(void *dest, void *src, int pair_num) {
   memcpy(dest, src, pair_num * (GetKeySize() + sizeof(RowId)));
 }
 
+void LeafPage::PairMove(void *dest, void *src, int pair_num) {
+  memmove(dest, src, pair_num * (GetKeySize() + sizeof(RowId)));
+}
+
 /*
  * Helper method to find and return the key & value pair associated with input
  * "index"(a.k.a. array offset)
