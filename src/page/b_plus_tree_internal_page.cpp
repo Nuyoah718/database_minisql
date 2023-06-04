@@ -69,23 +69,27 @@ void InternalPage::PairCopy(void *dest, void *src, int pair_num) {
  */
 page_id_t InternalPage::Lookup(const GenericKey *key, const KeyManager &KM) {
   int size = GetSize();
-  if (size < 1) {
+  if (size < 2) {
     return INVALID_PAGE_ID;
+  }
+
+  if (KM.CompareKeys(key, KeyAt(1)) < 0) {
+    return ValueAt(0);
   }
 
   // binary search, [l, r)
   int l = 1, r = size, m = l + (r - l) / 2;
-  while (l < r) {
-    if (KM.CompareKeys(key, KeyAt(m)) == 0) {
-      break;
-    } else if (KM.CompareKeys(key, KeyAt(m)) > 0) {
-      l = m + 1;
-    } else {
+  while (l < r - 1) {
+    if (KM.CompareKeys(key, KeyAt(m)) < 0) {
       r = m;
+    } else {
+      l = m;
     }
+    m = l + (r - l) / 2;
   }
 
-  return (KM.CompareKeys(key, KeyAt(m)) == 0)? ValueAt(m) : INVALID_FRAME_ID;
+  // key[l] < key, Key[l + 1] == Key[r] >= key
+  return ValueAt(l);
 }
 
 /*****************************************************************************
