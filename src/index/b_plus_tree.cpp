@@ -262,7 +262,30 @@ IndexIterator BPlusTree::End() {
  * Note: the leaf page is pinned, you need to unpin it after use.
  */
 Page *BPlusTree::FindLeafPage(const GenericKey *key, page_id_t page_id, bool leftMost) {
-  return nullptr;
+  /* input parameter 'page_id' is not used; 
+   * Might be useful in recursive implementation. 
+   */
+  
+  auto *root_page = buffer_pool_manager_->FetchPage(root_page_id_);
+  BPlusTreePage *cur_page = reinterpret_cast<BPlusTreePage *>(root_page->GetData());
+
+  while (!cur_page->IsLeafPage()) {
+    /* cur_page is InternalPage */
+    auto *in_page = reinterpret_cast<InternalPage *>(cur_page);
+    page_id_t next_pgae_id;
+    if (leftMost) {
+      next_pgae_id = in_page->ValueAt(0);
+    } else {
+      next_pgae_id = in_page->Lookup(key, processor_);
+    }
+
+    page_id_t this_page_id = in_page->GetPageId();
+
+    cur_page = reinterpret_cast<BPlusTreePage*>(buffer_pool_manager_->FetchPage(next_pgae_id)->GetData());
+    buffer_pool_manager_->UnpinPage(this_page_id, false);
+  }
+  
+  return buffer_pool_manager_->FetchPage(cur_page->GetPageId());
 }
 
 /*
