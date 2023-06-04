@@ -103,7 +103,35 @@ std::pair<GenericKey *, RowId> LeafPage::GetItem(int index) {
  * @return page size after insertion
  */
 int LeafPage::Insert(GenericKey *key, const RowId &value, const KeyManager &KM) {
-  return 0;
+  int size = GetSize();
+  /* Maybe we can use ASSERT(size <= GetMaxSize()) for 'TEMPORARY OVERFLOW' */
+  ASSERT(size < GetMaxSize(), "LeafPage is full, cannot Insert.");
+
+  // Linear scan: O(N)
+  int idx = 0;
+  for (; idx < size; ++idx) {
+    int res = KM.CompareKeys(key, KeyAt(idx));
+    ASSERT(res != 0, "Duplicated keys.");
+    if (res < 0) {
+      /* key > KeyAt(ind - 1) && key < KeyAt(ind) */
+      break;
+    }
+  }
+
+  // Move and insert: O(N)
+  if (idx < size) {
+    // PairMove: O(N) to make space for insersion
+    int num = size - idx;
+    PairMove(PairPtrAt(idx + 1), PairPtrAt(idx), num);
+  }
+
+  // insert O(1)
+  SetKeyAt(idx, key);
+  SetValueAt(idx, value);
+  // size count increase
+  SetSize(size + 1);
+
+  return size + 1;
 }
 
 /*****************************************************************************
