@@ -106,11 +106,35 @@ bool BPlusTree::InsertIntoLeaf(GenericKey *key, const RowId &value, Transaction 
  * of key & value pairs from input page to newly created page
  */
 BPlusTreeInternalPage *BPlusTree::Split(InternalPage *node, Transaction *transaction) {
-  return nullptr;
+  page_id_t new_page_id = INVALID_PAGE_ID;
+  page_id_t parent_id = node->GetPageId();
+  auto *page = buffer_pool_manager_->NewPage(new_page_id);
+  ASSERT(page != nullptr, "Out of memory.");
+
+  auto *in_page = reinterpret_cast<InternalPage *>(page->GetData());
+  in_page->Init(new_page_id, parent_id, node->GetKeySize(), INTERNAL_PAGE_SIZE);
+
+  node->MoveHalfTo(in_page, buffer_pool_manager_);
+  
+  return in_page;
 }
 
 BPlusTreeLeafPage *BPlusTree::Split(LeafPage *node, Transaction *transaction) {
-  return nullptr;
+  page_id_t new_page_id = INVALID_PAGE_ID;
+  page_id_t parent_id = node->GetPageId();
+  auto *page = buffer_pool_manager_->NewPage(new_page_id);
+  ASSERT(page != nullptr, "Out of memory.");
+
+  auto *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
+  leaf_page->Init(new_page_id, parent_id, node->GetKeySize(), LEAF_PAGE_SIZE);
+
+  node->MoveHalfTo(leaf_page);
+
+  /* keep leaf nodes linked */
+  leaf_page->SetNextPageId(node->GetNextPageId());
+  node->SetNextPageId(leaf_page->GetPageId());
+  
+  return leaf_page;
 }
 
 /*
