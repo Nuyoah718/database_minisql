@@ -92,7 +92,7 @@ void LeafPage::PairMove(void *dest, void *src, int pair_num) {
  */
 std::pair<GenericKey *, RowId> LeafPage::GetItem(int index) {
     // replace with your own code
-    return make_pair(nullptr, RowId());
+    return make_pair<GenericKey *, RowId>(KeyAt(index), ValueAt(index));
 }
 
 /*****************************************************************************
