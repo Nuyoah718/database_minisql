@@ -113,7 +113,7 @@ std::pair<GenericKey *, RowId> LeafPage::GetItem(int index) {
 int LeafPage::Insert(GenericKey *key, const RowId &value, const KeyManager &KM) {
   int size = GetSize();
   /* Maybe we can use ASSERT(size <= GetMaxSize()) for 'TEMPORARY OVERFLOW' */
-  ASSERT(size < GetMaxSize(), "LeafPage is full, cannot Insert.");
+  ASSERT(size <= GetMaxSize(), "LeafPage is full, cannot Insert.");
 
   // Linear scan: O(N)
   int idx = 0;

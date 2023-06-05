@@ -136,7 +136,7 @@ void InternalPage::PopulateNewRoot(const page_id_t &old_value, GenericKey *new_k
  */
 int InternalPage::InsertNodeAfter(const page_id_t &old_value, GenericKey *new_key, const page_id_t &new_value) {
   int size = GetSize();
-  ASSERT(size >= 2 && size < GetMaxSize(), "InternalPage is full, cannot Insert.");
+  ASSERT(size >= 2 && size <= GetMaxSize(), "InternalPage is full, cannot Insert.");
 
   // ValueIndex: O(N) to find index
   int old_ind = ValueIndex(old_value);

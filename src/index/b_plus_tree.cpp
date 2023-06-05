@@ -168,8 +168,27 @@ BPlusTreeLeafPage *BPlusTree::Split(LeafPage *node, Transaction *transaction) {
 void BPlusTree::InsertIntoParent(BPlusTreePage *old_node, GenericKey *key, BPlusTreePage *new_node,
                                  Transaction *transaction) {
   /* 1. if old_node is Root, create new root */
+  if (old_node->IsRootPage()) {
+    // create new page 
+    // populate new root page adopt this two
+    // change this two's parent to new root
+    return;
+  }
+  Page *P = buffer_pool_manager_->FetchPage(old_node->GetParentPageId());
+  InternalPage *parent = reinterpret_cast<InternalPage *>(P->GetData());
+
   /* 2. let P = parent(old), if P is not full, insertAfter(old) */
+  if (parent->GetSize() < parent->GetMaxSize()) {
+    parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
+  } else if (parent->GetSize() == parent->GetMaxSize()) { 
   /* 3. if P is full, insertAfter(temporarily) and split; InsertIntoParent */
+    parent->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());
+    InternalPage *new_page = Split(parent, transaction);
+    auto *new_key = new_page->KeyAt(0);
+    InsertIntoParent(parent, new_key, new_page);
+  } else {
+    ASSERT(false, "size > max_size!!");
+  }
 }
 
 /*****************************************************************************
@@ -242,6 +261,8 @@ void BPlusTree::Redistribute(InternalPage *neighbor_node, InternalPage *node, in
  * happened
  */
 bool BPlusTree::AdjustRoot(BPlusTreePage *old_root_node) {
+  // call page_id_t InternalPage::RemoveAndReturnOnlyChild() {
+
   return false;
 }
 
