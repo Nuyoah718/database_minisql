@@ -235,6 +235,23 @@ int LeafPage::RemoveAndDeleteRecord(const GenericKey *key, const KeyManager &KM)
  * to update the next_page id in the sibling page
  */
 void LeafPage::MoveAllTo(LeafPage *recipient) {
+  /* check recipient on left of this LeafPage 
+   * : recipient -> this -> rightPage 
+   */
+  ASSERT(recipient->GetNextPageId() == GetPageId(), "Recipient should be preious page.");
+  
+  /* check sum of size */
+  int recip_size = recipient->GetSize();
+  int size = GetSize();
+  int sum_size = size + recip_size;
+  ASSERT(sum_size <= GetMaxSize(), "This merge will cause overflow.");
+
+  PairCopy(recipient->PairPtrAt(recip_size), PairPtrAt(0), size);
+  recipient->SetNextPageId(GetNextPageId());
+
+  /* modify size */
+  recipient->SetSize(sum_size);
+  this->SetSize(0);
 }
 
 /*****************************************************************************
