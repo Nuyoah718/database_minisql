@@ -198,7 +198,33 @@ bool LeafPage::Lookup(const GenericKey *key, RowId &value, const KeyManager &KM)
  * @return  page size after deletion
  */
 int LeafPage::RemoveAndDeleteRecord(const GenericKey *key, const KeyManager &KM) {
-  return -1;
+  /* Find key to delete: O(N) */
+  int size = GetSize();
+  ASSERT(size > 0, "Conot delete key in an empty leaf.");
+  
+  int index = 0;
+  for (; index < size; ++index) {
+    if (KM.CompareKeys(key, KeyAt(index)) == 0) {
+      break;
+    }
+  }
+
+  if (index == size) {
+    /* key is not found */
+    return size;
+  } else if (index < size - 1) {
+    /* perform deletion: O(N) */
+    int num = size - index - 1;
+    PairMove(PairPtrAt(index), PairPtrAt(index + 1), num);
+  } else if (index == size - 1) {
+    /* do nothing */
+  }
+
+  /* We don't consider the underflow here, 
+   * any new size include 0 is OK.
+   */
+  SetSize(size - 1);
+  return size - 1;
 }
 
 /*****************************************************************************
