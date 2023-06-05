@@ -223,6 +223,8 @@ void BPlusTree::Remove(const GenericKey *key, Transaction *transaction) {
  */
 template <typename N>
 bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
+  /* call bool BPlusTree::AdjustRoot(BPlusTreePage *old_root_node) */
+
   return false;
 }
 
