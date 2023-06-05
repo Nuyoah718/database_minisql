@@ -68,7 +68,7 @@ bool BPlusTree::Insert(GenericKey *key, const RowId &value, Transaction *transac
 void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
   page_id_t id;
   auto *new_page = buffer_pool_manager_->NewPage(id);
-  ASSERT(new_page == nullptr, "out of memory"); // exception
+  ASSERT(new_page != nullptr, "out of memory"); // exception
 
   auto *root_page = reinterpret_cast<BPlusTreeLeafPage *>(new_page->GetData());
   root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE);
@@ -88,6 +88,9 @@ void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
  * keys return false, otherwise return true.
  */
 bool BPlusTree::InsertIntoLeaf(GenericKey *key, const RowId &value, Transaction *transaction) {
+  ASSERT(!IsEmpty(), "Cannot insert into empty tree!");
+  
+  /* see whether insert key exist or not */
   std::vector<RowId> tmpRes;
   if (GetValue(key, tmpRes)) {
     // duplicate key, return false
@@ -95,7 +98,23 @@ bool BPlusTree::InsertIntoLeaf(GenericKey *key, const RowId &value, Transaction 
   }
 
   /* todo(Tao): insert operation, split... */
-  return false;
+  /* 1. find LeafPage L */
+  Page *page = FindLeafPage(key, root_page_id_);
+  auto *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
+
+  /* 2. if not full, insert to page */
+  if (leaf_page->GetSize() < leaf_page->GetMaxSize()) {
+    leaf_page->Insert(key, value, processor_);
+  } else {
+  /* 3. if L is full, insert (temporarily) and split to L' */
+    leaf_page->Insert(key, value, processor_);
+    auto *new_leaf = Split(leaf_page, transaction);
+    auto *new_key = new_leaf->KeyAt(0);
+  /* 4. insert K'(smallest key of L') to parent */
+    InsertIntoParent(leaf_page, new_key, new_leaf);
+  }
+  
+  return true;
 }
 
 /*
@@ -148,6 +167,9 @@ BPlusTreeLeafPage *BPlusTree::Split(LeafPage *node, Transaction *transaction) {
  */
 void BPlusTree::InsertIntoParent(BPlusTreePage *old_node, GenericKey *key, BPlusTreePage *new_node,
                                  Transaction *transaction) {
+  /* 1. if old_node is Root, create new root */
+  /* 2. let P = parent(old), if P is not full, insertAfter(old) */
+  /* 3. if P is full, insertAfter(temporarily) and split; InsertIntoParent */
 }
 
 /*****************************************************************************
