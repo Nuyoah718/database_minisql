@@ -8,7 +8,6 @@
 #include "common/rowid.h"
 #include "record/field.h"
 #include "record/schema.h"
-#include "utils/mem_heap.h"
 
 /**
  *  Row format:
@@ -22,26 +21,24 @@
  *
  *
  */
-class Row
-{
+class Row {
  public:
   /**
    * Row used for insert
    * Field integrity should check by upper level
    */
-  explicit Row(std::vector<Field> &fields)
-  {
-    //深拷贝
-    for (auto &field : fields)
+  Row(std::vector<Field> &fields) {
+    // deep copy
+    for (auto &field : fields) {
       fields_.push_back(new Field(field));
+    }
   }
 
-  void destroy()
-  {
-    if (!fields_.empty())
-    {
-      for (auto field : fields_)
+  void destroy() {
+    if (!fields_.empty()) {
+      for (auto field : fields_) {
         delete field;
+      }
       fields_.clear();
     }
   }
@@ -61,23 +58,23 @@ class Row
   /**
    * Row copy function, deep copy
    */
-  Row(const Row &other)
-  {
+  Row(const Row &other) {
     destroy();
     rid_ = other.rid_;
-    for (auto &field : other.fields_)
+    for (auto &field : other.fields_) {
       fields_.push_back(new Field(*field));
+    }
   }
 
   /**
    * Assign operator, deep copy
    */
-  Row &operator=(const Row &other)
-  {
+  Row &operator=(const Row &other) {
     destroy();
     rid_ = other.rid_;
-    for (auto &field : other.fields_)
+    for (auto &field : other.fields_) {
       fields_.push_back(new Field(*field));
+    }
     return *this;
   }
 
@@ -103,8 +100,7 @@ class Row
 
   inline std::vector<Field *> &GetFields() { return fields_; }
 
-  inline Field *GetField(uint32_t idx) const
-  {
+  inline Field *GetField(uint32_t idx) const {
     ASSERT(idx < fields_.size(), "Failed to access field");
     return fields_[idx];
   }
@@ -112,11 +108,7 @@ class Row
   inline size_t GetFieldCount() const { return fields_.size(); }
 
  private:
-  static constexpr uint32_t ROW_MAGIC_NUM = 210928;
   RowId rid_{};
-  MemHeap *heap_{nullptr};
-  uint32_t fields_nums{0};
-  uint32_t null_nums{0};
   std::vector<Field *> fields_; /** Make sure that all field ptr are destructed*/
 };
 
