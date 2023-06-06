@@ -7,13 +7,11 @@
 #include "glog/logging.h"
 #include "page/bitmap_page.h"
 
-DiskManager::DiskManager(const std::string &db_file) : file_name_(db_file)
-{
+DiskManager::DiskManager(const std::string &db_file) : file_name_(db_file) {
   std::scoped_lock<std::recursive_mutex> lock(db_io_latch_);
   db_io_.open(db_file, std::ios::binary | std::ios::in | std::ios::out);
   // directory or file does not exist
-  if (!db_io_.is_open())
-  {
+  if (!db_io_.is_open()) {
     db_io_.clear();
     //如果文件不存在，就创建一个新的文件
     std::filesystem::path p = db_file;
@@ -23,9 +21,7 @@ DiskManager::DiskManager(const std::string &db_file) : file_name_(db_file)
     //重新打开文件
     db_io_.open(db_file, std::ios::binary | std::ios::in | std::ios::out);
     if (!db_io_.is_open())
-    {
       throw std::exception();
-    }
   }
   //加载元数据（meta_data_)
   ReadPhysicalPage(META_PAGE_ID, meta_data_);
@@ -34,31 +30,26 @@ DiskManager::DiskManager(const std::string &db_file) : file_name_(db_file)
 void DiskManager::Close()
 {
   std::scoped_lock<std::recursive_mutex> lock(db_io_latch_);
-  if (!closed)
-  {
+  if (!closed) {
     db_io_.close();
     closed = true;
   }
 }
 
-void DiskManager::ReadPage(page_id_t logical_page_id, char *page_data)
-{
+void DiskManager::ReadPage(page_id_t logical_page_id, char *page_data) {
   ASSERT(logical_page_id >= 0, "Invalid page id.");
   ReadPhysicalPage(MapPageId(logical_page_id), page_data);
 }
 
-void DiskManager::WritePage(page_id_t logical_page_id, const char *page_data)
-{
+void DiskManager::WritePage(page_id_t logical_page_id, const char *page_data) {
   ASSERT(logical_page_id >= 0, "Invalid page id.");
   WritePhysicalPage(MapPageId(logical_page_id), page_data);
 }
 
-
 /**
  * TODO: Student Implement
  */
-page_id_t DiskManager::AllocatePage()
-{
+page_id_t DiskManager::AllocatePage() {
   //获取元数据页，里面包含了文件的元数据信息
   auto* meta_page = reinterpret_cast<DiskFileMetaPage*>(meta_data_);
   //获取文件中的 Extent 数量
@@ -66,22 +57,17 @@ page_id_t DiskManager::AllocatePage()
 
   //遍历每一个 Extent，找到第一个还有空闲页的 Extent
   uint32_t extent_index;
-  for (extent_index = 0; extent_index < extent_count; extent_index++)
-  {
-    if (meta_page->extent_used_page_[extent_index] < DiskManager::BITMAP_SIZE) 
-    {
+  for (extent_index = 0; extent_index < extent_count; extent_index++) {
+    if (meta_page->extent_used_page_[extent_index] < DiskManager::BITMAP_SIZE)
       break;
-    }
   }
 
   //如果每一个 Extent 都没有空闲页了，那么就需要新分配一个 Extent
-  if (extent_index == extent_count)
-  {
+  if (extent_index == extent_count) {
     //如果已经分配的 Extent 数量已经达到最大限制，那么就无法再分配了
     if (extent_index == (PAGE_SIZE - 8) / 4)
-    {
       return INVALID_PAGE_ID;
-    }
+
     //分配新的 Extent
     meta_page->num_allocated_pages_++;
     meta_page->num_extents_++;
@@ -103,17 +89,16 @@ page_id_t DiskManager::AllocatePage()
   ReadPhysicalPage(1 + extent_index * (DiskManager::BITMAP_SIZE + 1), buf);
   auto* bitmap = reinterpret_cast<BitmapPage<PAGE_SIZE>*>(buf);
   uint32_t page_index;
-  for (page_index = 0; page_index < BitmapPage<4096>::GetMaxSupportedSize(); page_index++) 
-  {
-    if (bitmap->IsPageFree(page_index)) 
-    {
+
+  for (page_index = 0; page_index < BitmapPage<4096>::GetMaxSupportedSize(); page_index++) {
+    if (bitmap->IsPageFree(page_index))
       break;
-    }
   }
   
   //更新元数据信息，表示已经分配了一个新的页
   meta_page->num_allocated_pages_++;
   meta_page->extent_used_page_[extent_index]++;
+
   //将新分配的页的状态设置为已分配
   bitmap->AllocatePage(page_index);
   WritePhysicalPage(1 + extent_index * (DiskManager::BITMAP_SIZE + 1), buf);
@@ -122,21 +107,16 @@ page_id_t DiskManager::AllocatePage()
   return meta_page->num_allocated_pages_ - 1;
 }
 
-
 /**
  * TODO: Student Implement
  */
-void DiskManager::DeAllocatePage(page_id_t logical_page_id)
-{
+void DiskManager::DeAllocatePage(page_id_t logical_page_id) {
   if (IsPageFree(logical_page_id))
-  {
-    // 如果页面已经释放，直接返回
-    return;
-  }
-  else
-  {
+    return;    //如果页面已经释放，直接返回
+  else {
     //获取文件元数据页面
     auto *meta_page = reinterpret_cast<DiskFileMetaPage *>(meta_data_);
+
     //读取位图页面
     char bitmap_buf[PAGE_SIZE];
     const uint32_t bitmap_page_id = 1 + logical_page_id / DiskManager::BITMAP_SIZE * (DiskManager::BITMAP_SIZE + 1);
@@ -152,12 +132,10 @@ void DiskManager::DeAllocatePage(page_id_t logical_page_id)
   }
 }
 
-
 /**
  * TODO: Student Implement
  */
-bool DiskManager::IsPageFree(page_id_t logical_page_id)
-{
+bool DiskManager::IsPageFree(page_id_t logical_page_id) {
   const int kPageSize = PAGE_SIZE;
   const int kBitmapSize = DiskManager::BITMAP_SIZE;
   const int kBitmapEntrySize = kBitmapSize + 1;
@@ -175,12 +153,10 @@ bool DiskManager::IsPageFree(page_id_t logical_page_id)
   return is_free;
 }
 
-
 /**
  * TODO: Student Implement
  */
-page_id_t DiskManager::MapPageId(page_id_t logical_page_id)
-{
+page_id_t DiskManager::MapPageId(page_id_t logical_page_id) {
   const int kBitmapSize = DiskManager::BITMAP_SIZE;
   const int kBitmapEntrySize = kBitmapSize + 1;
 
@@ -191,40 +167,27 @@ page_id_t DiskManager::MapPageId(page_id_t logical_page_id)
   return physical_page_num;
 }
 
-int DiskManager::GetFileSize(const std::string &file_name)
-{
-  struct stat file_stat{};
-  int rc = stat(file_name.c_str(), &file_stat);
-
-  //检查文件状态是否正常
-  if (rc != 0) {
-    return -1;
-  }
-
-  //返回文件大小
-  return file_stat.st_size;
+int DiskManager::GetFileSize(const std::string &file_name) {
+  struct stat stat_buf;
+  int rc = stat(file_name.c_str(), &stat_buf);
+  return rc == 0 ? stat_buf.st_size : -1;
 }
 
-void DiskManager::ReadPhysicalPage(page_id_t physical_page_id, char *page_data)
-{
+void DiskManager::ReadPhysicalPage(page_id_t physical_page_id, char *page_data) {
   int offset = physical_page_id * PAGE_SIZE;
   // check if read beyond file length
-  if (offset >= GetFileSize(file_name_))
-  {
+  if (offset >= GetFileSize(file_name_)) {
 #ifdef ENABLE_BPM_DEBUG
     LOG(INFO) << "Read less than a page" << std::endl;
 #endif
     memset(page_data, 0, PAGE_SIZE);
-  }
-  else
-  {
+  } else {
     // set read cursor to offset
     db_io_.seekp(offset);
     db_io_.read(page_data, PAGE_SIZE);
     // if file ends before reading PAGE_SIZE
     int read_count = db_io_.gcount();
-    if (read_count < PAGE_SIZE)
-    {
+    if (read_count < PAGE_SIZE) {
 #ifdef ENABLE_BPM_DEBUG
       LOG(INFO) << "Read less than a page" << std::endl;
 #endif
@@ -233,15 +196,13 @@ void DiskManager::ReadPhysicalPage(page_id_t physical_page_id, char *page_data)
   }
 }
 
-void DiskManager::WritePhysicalPage(page_id_t physical_page_id, const char *page_data)
-{
+void DiskManager::WritePhysicalPage(page_id_t physical_page_id, const char *page_data) {
   size_t offset = static_cast<size_t>(physical_page_id) * PAGE_SIZE;
   // set write cursor to offset
   db_io_.seekp(offset);
   db_io_.write(page_data, PAGE_SIZE);
   // check for I/O error
-  if (db_io_.bad())
-  {
+  if (db_io_.bad()) {
     LOG(ERROR) << "I/O error while writing";
     return;
   }
