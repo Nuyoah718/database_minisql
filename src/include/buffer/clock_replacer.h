@@ -1,42 +1,34 @@
 #ifndef MINISQL_CLOCK_REPLACER_H
 #define MINISQL_CLOCK_REPLACER_H
 
-#include <mutex>
-#include <vector>
 #include <algorithm>
+#include <list>
+#include <map>
+#include <mutex>
+#include <queue>
+#include <unordered_set>
+#include <vector>
 
 #include "buffer/replacer.h"
 #include "common/config.h"
 
 using namespace std;
 
-class ClockReplacer: public Replacer 
-{
- private:
-  /**
-   * @brief state of the frame
-   * if pin -> EMPTY
-   * if unpin -> ACCESSED
-   * after ACCESSED -> UNUSED
-   */
-  enum class State 
-  { 
-    EMPTY, 
-    ACCESSED, 
-    UNUSED 
-  };
-
+/**
+ * CLOCKReplacer implements the clock replacement.
+ */
+class CLOCKReplacer : public Replacer {
  public:
   /**
-   * Create a new ClockReplacer.
-   * @param num_pages the maximum number of pages the ClockReplacer will be required to store
+   * Create a new CLOCKReplacer.
+   * @param num_pages the maximum number of pages the CLOCKReplacer will be required to store
    */
-  explicit ClockReplacer(size_t num_pages);
+  explicit CLOCKReplacer(size_t num_pages);
 
   /**
-   * Destroys the ClockReplacer.
+   * Destroys the CLOCKReplacer.
    */
-  ~ClockReplacer() override;
+  ~CLOCKReplacer() override;
 
   bool Victim(frame_id_t *frame_id) override;
 
@@ -47,12 +39,9 @@ class ClockReplacer: public Replacer
   size_t Size() override;
 
  private:
-  static bool IsEmpty(ClockReplacer::State &);
-
- private:
-  std::vector<State> replacer;
-  frame_id_t index{0};
-  size_t max_size;
+  size_t capacity;
+  list<frame_id_t> clock_list;               // replacer中可以被替换的数据页
+  map<frame_id_t, frame_id_t> clock_status;  // 数据页的存储状态
 };
 
 #endif  // MINISQL_CLOCK_REPLACER_H
