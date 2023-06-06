@@ -6,8 +6,7 @@
 #include "common/macros.h"
 #include "record/types.h"
 
-class Column 
-{
+class Column {
   friend class Schema;
 
  public:
