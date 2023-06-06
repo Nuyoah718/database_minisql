@@ -18,6 +18,21 @@ uint32_t Schema::SerializeTo(char *buf) const
   return ofs;    //返回序列化后的字节数
 }
 
+/**
+ * TODO: Student Implement
+ */
+//获取Schema对象序列化后的字节数
+uint32_t Schema::GetSerializedSize() const
+{
+  uint32_t size = 0;
+
+  //遍历columns_，获取每个Column对象序列化后的字节数，并累加到size中
+  for (auto &itr : columns_)
+    size += itr->GetSerializedSize();
+
+  //返回计算得到的序列化后的总字节数（要加上SCHEMA_MAGIC_NUM和columns_长度两个uint32_t类型的字节数）
+  return size + 2 * sizeof(uint32_t);
+}
 
 /**
  * TODO: Student Implement
@@ -45,21 +60,4 @@ uint32_t Schema::DeserializeFrom(char *buf, Schema *&schema)
 
   //返回从缓冲区中读取的字节数
   return ofs;
-}
-
-
-/**
- * TODO: Student Implement
- */
-//获取Schema对象序列化后的字节数
-uint32_t Schema::GetSerializedSize() const
-{
-  uint32_t size = 0;
-
-  //遍历columns_，获取每个Column对象序列化后的字节数，并累加到size中
-  for (auto &itr : columns_)
-    size += itr->GetSerializedSize();
-
-  //返回计算得到的序列化后的总字节数（要加上SCHEMA_MAGIC_NUM和columns_长度两个uint32_t类型的字节数）
-  return size + 2 * sizeof(uint32_t);
 }
