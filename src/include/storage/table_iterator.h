@@ -8,11 +8,13 @@
 class TableHeap;
 
 class TableIterator {
+ private:
+  explicit TableIterator() = default;
+
  public:
   //构造函数和析构函数
-  explicit TableIterator();
   explicit TableIterator(TableHeap *table_heap, RowId rid, Transaction *txn);
-  explicit TableIterator(const TableIterator &other);
+  TableIterator(const TableIterator &other);
   virtual ~TableIterator();
 
   //运算符重载
