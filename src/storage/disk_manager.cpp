@@ -49,6 +49,7 @@ void DiskManager::WritePage(page_id_t logical_page_id, const char *page_data) {
 /**
  * TODO: Student Implement
  */
+//从磁盘中分配一个空闲页，并返回空闲页的逻辑页号
 page_id_t DiskManager::AllocatePage() {
   //获取元数据页，里面包含了文件的元数据信息
   auto* meta_page = reinterpret_cast<DiskFileMetaPage*>(meta_data_);
@@ -110,6 +111,7 @@ page_id_t DiskManager::AllocatePage() {
 /**
  * TODO: Student Implement
  */
+//释放磁盘中逻辑页号对应的物理页
 void DiskManager::DeAllocatePage(page_id_t logical_page_id) {
   if (IsPageFree(logical_page_id))
     return;    //如果页面已经释放，直接返回
@@ -135,6 +137,7 @@ void DiskManager::DeAllocatePage(page_id_t logical_page_id) {
 /**
  * TODO: Student Implement
  */
+//判断该逻辑页号对应的数据页是否空闲
 bool DiskManager::IsPageFree(page_id_t logical_page_id) {
   const int kPageSize = PAGE_SIZE;
   const int kBitmapSize = DiskManager::BITMAP_SIZE;
@@ -156,6 +159,7 @@ bool DiskManager::IsPageFree(page_id_t logical_page_id) {
 /**
  * TODO: Student Implement
  */
+//用于将逻辑页号转换成物理页号
 page_id_t DiskManager::MapPageId(page_id_t logical_page_id) {
   const int kBitmapSize = DiskManager::BITMAP_SIZE;
   const int kBitmapEntrySize = kBitmapSize + 1;
@@ -167,22 +171,24 @@ page_id_t DiskManager::MapPageId(page_id_t logical_page_id) {
   return physical_page_num;
 }
 
+//获取文件的大小
 int DiskManager::GetFileSize(const std::string &file_name) {
   struct stat stat_buf;
   int rc = stat(file_name.c_str(), &stat_buf);
   return rc == 0 ? stat_buf.st_size : -1;
 }
 
+//读取物理页面
 void DiskManager::ReadPhysicalPage(page_id_t physical_page_id, char *page_data) {
   int offset = physical_page_id * PAGE_SIZE;
-  // check if read beyond file length
+  //检查是否读取的范围超出了当前文件的长度
   if (offset >= GetFileSize(file_name_)) {
 #ifdef ENABLE_BPM_DEBUG
     LOG(INFO) << "Read less than a page" << std::endl;
 #endif
     memset(page_data, 0, PAGE_SIZE);
   } else {
-    // set read cursor to offset
+    //根据偏移设置读取指针
     db_io_.seekp(offset);
     db_io_.read(page_data, PAGE_SIZE);
     // if file ends before reading PAGE_SIZE
@@ -196,6 +202,7 @@ void DiskManager::ReadPhysicalPage(page_id_t physical_page_id, char *page_data) 
   }
 }
 
+//写入物理页面
 void DiskManager::WritePhysicalPage(page_id_t physical_page_id, const char *page_data) {
   size_t offset = static_cast<size_t>(physical_page_id) * PAGE_SIZE;
   // set write cursor to offset
