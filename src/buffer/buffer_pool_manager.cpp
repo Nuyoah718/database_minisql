@@ -3,24 +3,33 @@
 #include "glog/logging.h"
 #include "page/bitmap_page.h"
 
+//Buffer Pool Manager 负责从Disk Manager中获取数据页并将它们存储在内存中
+//并在必要时将脏页面转储到磁盘中（如需要为新的页面腾出空间）
+
 //初始化静态常量字符：设置空页数量为0
 static const char EMPTY_PAGE_DATA[PAGE_SIZE] = {0};
 
-//默认构造函数
+//默认构造函数：初始化Buffer Pool Manager
 BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager)
     : pool_size_(pool_size), disk_manager_(disk_manager) {
+  //初始化页面数组和LRU替换器
   pages_ = new Page[pool_size_];
   replacer_ = new LRUReplacer(pool_size_);
+
+  //初始化空闲列表
   for (size_t i = 0; i < pool_size_; i++) {
     free_list_.emplace_back(i);
   }
 }
 
-//默认析构函数
+//默认析构函数：销毁Buffer Pool Manager
 BufferPoolManager::~BufferPoolManager() {
-  for (auto page : page_table_) {
+  //遍历页面表，将所有页面刷新至磁盘
+  for (auto &page : page_table_) {
     FlushPage(page.first);
   }
+
+  // 释放页面数组和LRU替换器
   delete[] pages_;
   delete replacer_;
 }
@@ -40,6 +49,8 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
 
   //在页面表中查找请求的页面（P）
   auto itr = page_table_.find(page_id);
+
+
   frame_id_t frame_idx;
   Page *target_frame;
 
@@ -163,7 +174,7 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
   // 2.   If P exists, but has a non-zero pin-count, return false. Someone is using the page.
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
   
-  //查找页面
+  //检查页面是否在页面表中
   auto page_itr = page_table_.find(page_id);
   frame_id_t frame_idx;
   Page *target_page;
