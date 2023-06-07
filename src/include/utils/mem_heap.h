@@ -1,7 +1,6 @@
 //
 // Created by Weilin Chang on 5/29/2023.
 //
-
 #ifndef MINISQL_MEM_HEAP_H
 #define MINISQL_MEM_HEAP_H
 
@@ -10,8 +9,7 @@
 #include <unordered_set>
 #include "common/macros.h"
 
-class MemHeap 
-{
+class MemHeap {
  public:
   virtual ~MemHeap() = default;
 
@@ -30,31 +28,29 @@ class MemHeap
 
 };
 
-class SimpleMemHeap : public MemHeap 
-{
+class SimpleMemHeap : public MemHeap {
  public:
-  ~SimpleMemHeap() 
-  {
-    for (auto it: allocated_) 
+  ~SimpleMemHeap() {
+    for (auto it: allocated_) {
       free(it);
+    }
   }
 
-  void *Allocate(size_t size) 
-  {
+  void *Allocate(size_t size) {
     void *buf = malloc(size);
     ASSERT(buf != nullptr, "Out of memory exception");
     allocated_.insert(buf);
     return buf;
   }
 
-  void Free(void *ptr) 
-  {
-    if (ptr == nullptr) 
+  void Free(void *ptr) {
+    if (ptr == nullptr) {
       return;
+    }
     auto iter = allocated_.find(ptr);
-    
-    if (iter != allocated_.end()) 
+    if (iter != allocated_.end()) {
       allocated_.erase(iter);
+    }
   }
 
  private:
