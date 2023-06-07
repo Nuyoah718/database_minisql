@@ -8,6 +8,7 @@
 #include "common/rowid.h"
 #include "record/field.h"
 #include "record/schema.h"
+#include "utils/mem_heap.h"
 
 /**
  *  Row format:
@@ -110,6 +111,10 @@ class Row {
  private:
   RowId rid_{};
   std::vector<Field *> fields_; /** Make sure that all field ptr are destructed*/
+
+  MemHeap *heap {nullptr};
+  uint32_t fields_nums{0};
+  uint32_t null_nums{0};
 };
 
 #endif  // MINISQL_ROW_H
