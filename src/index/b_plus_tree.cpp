@@ -212,6 +212,25 @@ void BPlusTree::InsertIntoParent(BPlusTreePage *old_node, GenericKey *key, BPlus
  * necessary.
  */
 void BPlusTree::Remove(const GenericKey *key, Transaction *transaction) {
+  if (IsEmpty())
+    return;
+
+  Page *page = FindLeafPage(key, root_page_id_);
+  LeafPage *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
+
+  leaf_page->RemoveAndDeleteRecord(key, processor_);
+
+  if (leaf_page->IsRootPage()) {
+    /* delete page if root is empty */
+    if (leaf_page->GetSize() == 0) {
+      root_page_id_ = INVALID_PAGE_ID;
+      buffer_pool_manager_->DeletePage(leaf_page->GetPageId());
+    }
+  } else if (leaf_page->GetSize() < leaf_page->GetMinSize()) {
+    CoalesceOrRedistribute(leaf_page, transaction);
+  } else {
+    /* do nothing */
+  }
 }
 
 /* todo
