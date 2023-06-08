@@ -262,18 +262,55 @@ void LeafPage::MoveAllTo(LeafPage *recipient) {
  *
  */
 void LeafPage::MoveFirstToEndOf(LeafPage *recipient) {
+  /* check: recipient -> this */
+  ASSERT(recipient->GetNextPageId() == GetPageId(), "Should be recipient -> this.");
+  /* check recipient is not full */
+  ASSERT(recipient->GetSize() < recipient->GetMaxSize(), "recipient is full.");
+  ASSERT(GetSize() > 0, "Empty leaf.");
+
+  /* move first to recipient's end */
+  int size = GetSize();
+  int r_size = recipient->GetSize();
+  /* copyLast from this node */
+  recipient->CopyLastFrom(KeyAt(0), ValueAt(0));
+
+  /* modify size */
+  SetSize(size - 1);
+  recipient->SetSize(r_size + 1);
 }
 
 /*
  * Copy the item into the end of my item list. (Append item to my array)
  */
 void LeafPage::CopyLastFrom(GenericKey *key, const RowId value) {
+  /* check page is not full */
+  int size = GetSize();
+  ASSERT(size < GetMaxSize(), "LeafPage is full.");
+  
+  SetKeyAt(size, key);
+  SetValueAt(size, value);
+  SetSize(size + 1);
 }
 
 /*
  * Remove the last key & value pair from this page to "recipient" page.
  */
 void LeafPage::MoveLastToFrontOf(LeafPage *recipient) {
+  /* check: this -> recipient */
+  ASSERT(GetNextPageId() == recipient->GetPageId(), "Should be this -> recipient.");
+  /* check recipient is not full */
+  ASSERT(recipient->GetSize() < recipient->GetMaxSize(), "recipient is full.");
+  ASSERT(GetSize() > 0, "Empty leaf.");
+
+  /* move Last to recipient's front */
+  int size = GetSize();
+  int r_size = recipient->GetSize();
+  /* copyLast from this node */
+  recipient->CopyFirstFrom(KeyAt(size - 1), ValueAt(size - 1));
+
+  /* modify size */
+  SetSize(size - 1);
+  recipient->SetSize(r_size + 1);
 }
 
 /*
@@ -281,4 +318,12 @@ void LeafPage::MoveLastToFrontOf(LeafPage *recipient) {
  *
  */
 void LeafPage::CopyFirstFrom(GenericKey *key, const RowId value) {
+  /* check page is not full */
+  int size = GetSize();
+  ASSERT(size < GetMaxSize(), "LeafPage is full.");
+  
+  PairMove(PairPtrAt(1), PairPtrAt(0), size);
+  SetKeyAt(0, key);
+  SetValueAt(0, value);
+  SetSize(size + 1);
 }
