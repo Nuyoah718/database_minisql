@@ -61,3 +61,4 @@ uint32_t Schema::DeserializeFrom(char *buf, Schema *&schema)
   //返回从缓冲区中读取的字节数
   return ofs;
 }
+//4698
