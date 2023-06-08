@@ -232,8 +232,12 @@ void InternalPage::Remove(int index) {
  * NOTE: only call this method within AdjustRoot()(in b_plus_tree.cpp)
  */
 page_id_t InternalPage::RemoveAndReturnOnlyChild() {
-  // todo(Tao): leave it later. [in AdjustRoot()]
-  return 0;
+  ASSERT(IsRootPage() && !IsLeafPage(), "PageType not satisfied.");
+  ASSERT(GetSize() == 1, "More than one child.");
+
+  page_id_t only_child_id = ValueAt(0);
+  SetSize(0); // delete last child
+  return only_child_id;
 }
 
 /*****************************************************************************

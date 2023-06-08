@@ -273,9 +273,26 @@ void BPlusTree::Redistribute(InternalPage *neighbor_node, InternalPage *node, in
  * happened
  */
 bool BPlusTree::AdjustRoot(BPlusTreePage *old_root_node) {
-  // call page_id_t InternalPage::RemoveAndReturnOnlyChild() {
+  ASSERT(old_root_node->IsRootPage(), "old_root_node Must be RootPage.");
 
-  return false;
+  if(!old_root_node->IsLeafPage() && old_root_node->GetSize() == 1) {
+    /* case 1 */
+    auto *internal_root = reinterpret_cast<InternalPage *>(old_root_node);
+    page_id_t only_child_id = internal_root->RemoveAndReturnOnlyChild();
+    root_page_id_ = only_child_id;
+  } else if(old_root_node->IsLeafPage() && old_root_node->GetSize() == 0) {
+    /* case 2 */
+    auto *leaf_root = reinterpret_cast<LeafPage *>(old_root_node);
+    leaf_root->RemoveAndDeleteRecord(leaf_root->KeyAt(0),processor_);
+    root_page_id_ = INVALID_PAGE_ID;
+  } else {
+    // ASSERT(false, "only case1 and case2 is valid.");
+    return false;
+  }
+
+  /* delete old_root_page */
+  buffer_pool_manager_->DeletePage(old_root_node->GetPageId());
+  return true;
 }
 
 /*****************************************************************************
