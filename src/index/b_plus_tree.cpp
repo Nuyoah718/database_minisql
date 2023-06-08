@@ -224,8 +224,45 @@ void BPlusTree::Remove(const GenericKey *key, Transaction *transaction) {
 template <typename N>
 bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
   /* call bool BPlusTree::AdjustRoot(BPlusTreePage *old_root_node) */
+  ASSERT(!node->IsRootPage(), "Root page has no siblings.");
 
-  return false;
+  /* find sibling of input page */
+  Page *parent = buffer_pool_manager_->FetchPage(node->GetParentPageId());
+  InternalPage *inter_parent = reinterpret_cast<InternalPage *>(parent->GetData());
+  int size_p = inter_parent->GetSize(); 
+  page_id_t node_page_id = node->GetPageId();
+  page_id_t sibling_page_id = INVALID_PAGE_ID;
+
+  int idx = 0;
+  for (; idx < size_p; ++idx) {
+    if (inter_parent->ValueAt(idx) == node_page_id) {
+      break;
+    }
+  }
+  ASSERT(idx != size_p, "Must find this node.");
+  if (idx == 0) {
+    /* sibling of first node is on right */
+    sibling_page_id = inter_parent->ValueAt(idx + 1);
+  } else {
+    /* others' silibing on left */
+    sibling_page_id = inter_parent->ValueAt(idx - 1);
+  }
+
+  /* decide Coalesce or Redistribute */
+  N *sibling_node = reinterpret_cast<N *>(buffer_pool_manager_->FetchPage(sibling_page_id)->GetData());
+  int size1 = node->GetSize();
+  int size2 = sibling_node->GetSize();
+
+  if (size1 + size2 < node->GetMaxSize()) {
+    Coalesce(sibling_node, node, inter_parent, 0, transaction);
+    if (inter_parent->IsRootPage()) {
+      AdjustRoot(inter_parent);
+    }
+    return true; // deletion in Adjust
+  } else {
+    Redistribute(sibling_node, node, 0);
+    return false; // no deletion 
+  }
 }
 
 /*
