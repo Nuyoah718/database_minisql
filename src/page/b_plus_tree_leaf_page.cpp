@@ -276,7 +276,6 @@ void LeafPage::MoveFirstToEndOf(LeafPage *recipient) {
 
   /* modify size */
   SetSize(size - 1);
-  recipient->SetSize(r_size + 1);
 }
 
 /*
@@ -305,12 +304,11 @@ void LeafPage::MoveLastToFrontOf(LeafPage *recipient) {
   /* move Last to recipient's front */
   int size = GetSize();
   int r_size = recipient->GetSize();
-  /* copyLast from this node */
+  /* copyFirst from this node */
   recipient->CopyFirstFrom(KeyAt(size - 1), ValueAt(size - 1));
 
   /* modify size */
   SetSize(size - 1);
-  recipient->SetSize(r_size + 1);
 }
 
 /*

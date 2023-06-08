@@ -266,6 +266,20 @@ void InternalPage::MoveAllTo(InternalPage *recipient, GenericKey *middle_key, Bu
  */
 void InternalPage::MoveFirstToEndOf(InternalPage *recipient, GenericKey *middle_key,
                                     BufferPoolManager *buffer_pool_manager) {
+  /* this function is used in case: recipient -> this */
+  /* check recipient is not full */
+  ASSERT(recipient->GetSize() < recipient->GetMaxSize(), "recipient is full.");
+  ASSERT(GetSize() > 0, "This page is empty.");
+
+  /* move Last to recipient's front */
+  int size = GetSize();
+  int r_size = recipient->GetSize();
+  /* ...||r.last_key|r.last_pointer||middle_key|this.first_pointer|| */
+  recipient->CopyLastFrom(middle_key, ValueAt(0), buffer_pool_manager);
+
+  /* modify size */
+  Remove(0);
+  SetSize(size - 1);
 }
 
 /* Append an entry at the end.
@@ -273,6 +287,18 @@ void InternalPage::MoveFirstToEndOf(InternalPage *recipient, GenericKey *middle_
  * So I need to 'adopt' it by changing its parent page id, which needs to be persisted with BufferPoolManger
  */
 void InternalPage::CopyLastFrom(GenericKey *key, const page_id_t value, BufferPoolManager *buffer_pool_manager) {
+  /* check page is not full */
+  int size = GetSize();
+  ASSERT(size < GetMaxSize(), "LeafPage is full.");
+  
+  SetKeyAt(size, key);
+  SetValueAt(size, value);
+
+  /* 'adopt' this page */
+  BPlusTreePage *child_page = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager->FetchPage(value)->GetData());
+  child_page->SetParentPageId(GetPageId());
+  
+  SetSize(size + 1);
 }
 
 /*
@@ -284,6 +310,21 @@ void InternalPage::CopyLastFrom(GenericKey *key, const page_id_t value, BufferPo
  */
 void InternalPage::MoveLastToFrontOf(InternalPage *recipient, GenericKey *middle_key,
                                      BufferPoolManager *buffer_pool_manager) {
+  /* this function is used in case: this -> recipient */
+  /* check recipient is not full */
+  ASSERT(recipient->GetSize() < recipient->GetMaxSize(), "recipient is full.");
+  ASSERT(GetSize() > 0, "This page is empty.");
+
+  /* move Last to recipient's front */
+  int size = GetSize();
+  int r_size = recipient->GetSize();
+  /* copyLast from this node */
+  recipient->CopyFirstFrom(ValueAt(size - 1), buffer_pool_manager);
+  /* ||dummy_key|this.last_pointer||middle_key|r.first_pointer||... */
+  recipient->SetKeyAt(1, middle_key); 
+
+  /* modify size */
+  SetSize(size - 1);
 }
 
 /* Append an entry at the beginning.
@@ -291,4 +332,16 @@ void InternalPage::MoveLastToFrontOf(InternalPage *recipient, GenericKey *middle
  * So I need to 'adopt' it by changing its parent page id, which needs to be persisted with BufferPoolManger
  */
 void InternalPage::CopyFirstFrom(const page_id_t value, BufferPoolManager *buffer_pool_manager) {
+  /* check page is not full */
+  int size = GetSize();
+  ASSERT(size < GetMaxSize(), "LeafPage is full.");
+  
+  PairMove(PairPtrAt(1), PairPtrAt(0), size);
+  SetValueAt(0, value);
+
+  /* 'adopt' this page */
+  BPlusTreePage *child_page = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager->FetchPage(value)->GetData());
+  child_page->SetParentPageId(GetPageId());
+  
+  SetSize(size + 1);
 }
