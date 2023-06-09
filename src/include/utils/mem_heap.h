@@ -1,6 +1,3 @@
-//
-// Created by Weilin Chang on 5/29/2023.
-//
 #ifndef MINISQL_MEM_HEAP_H
 #define MINISQL_MEM_HEAP_H
 
