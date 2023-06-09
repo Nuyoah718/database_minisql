@@ -102,7 +102,7 @@ class Row {
   [[nodiscard]] inline size_t GetFieldCount() const { return fields_.size(); }
 
   Row &operator=(const Row &other) = delete;
- 
+
  private:
   RowId rid_{};
   std::vector<Field *> fields_; /** Make sure that all field ptr are destructed*/
