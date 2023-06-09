@@ -1,132 +1,125 @@
-#ifndef MINISQL_ROW_H
-#define MINISQL_ROW_H
+#include "record/row.h"
+#include <algorithm>
+#include <cassert>
 
-#include <memory>
-#include <vector>
+//序列化函数
+uint32_t Row::SerializeTo(char *buf, Schema *schema) const {
+  //确保schema不为空
+  ASSERT(schema != nullptr, "Invalid schema before serialize.");
 
-#include "common/macros.h"
-#include "common/rowid.h"
-#include "record/field.h"
-#include "record/schema.h"
-#include "utils/mem_heap.h"
+  //确保fields的大小和schema的列数匹配
+  ASSERT(schema->GetColumnCount() == fields_.size(), "Fields size do not match schema's column size.");
 
-/**
- *  Row format:
- * -------------------------------------------
- * | Header | Field-1 | ... | Field-N |
- * -------------------------------------------
- *  Header format:
- * --------------------------------------------
- * | Field Nums | Null bitmap |
- * -------------------------------------------
- *
- *
- */
-class Row {
- public:
-  /**
-   * Row used for insert
-   * Field integrity should check by upper level
-   */
-  explicit Row(std::vector<Field> &fields) : heap_(new SimpleMemHeap) {
-    // deep copy
-    for (auto &field : fields) {
-      void *buf = heap_->Allocate(sizeof(Field));
-      fields_.push_back(new (buf) Field(field));
-      if (field.IsNull())
-        null_nums++;
+  uint32_t offset = 0;
+
+  //写入字段数量和null字段数量
+  offset = WriteToBuffer(buf, offset, fields_nums);
+  offset = WriteToBuffer(buf, offset, null_nums);
+
+  //标记null字段
+  for (uint32_t i = 0; i < fields_.size(); i++) {
+    if (fields_[i]->IsNull()) {
+      offset = WriteToBuffer(buf, offset, i);
     }
-
-    fields_nums = fields.size();
   }
 
-  /**
-   * Row used for deserialize
-   */
-  Row() = delete;
-
-  /**
-   * Row used for deserialize and update
-   */
-  explicit Row(RowId rid) : rid_(rid), heap_(new SimpleMemHeap) {}
-
-  /**
-   * Row copy function, deep copy
-   */
-  Row(const Row &other) : heap_(new SimpleMemHeap) {
-    if (!fields_.empty()) {
-      for (auto &field : fields_) {
-        heap_->Free(field);
-      }
-      fields_.clear();
+  //序列化非null字段
+  for (auto &field : fields_) {
+    if (!field->IsNull()) {
+      offset += field->SerializeTo(buf + offset);
     }
-    rid_ = other.rid_;
-    for (auto &field : other.fields_) {
-      void *buf = heap_->Allocate(sizeof(Field));
-      fields_.push_back(new (buf) Field(*field));
-      if (field->IsNull()) null_nums++;
+  }
+
+  return offset;
+}
+
+//反序列化函数
+uint32_t Row::DeserializeFrom(char *buf, Schema *schema) {
+  //确保schema不为空
+  ASSERT(schema != nullptr, "Invalid schema before serialize.");
+
+  //确保fields为空
+  ASSERT(fields_.empty(), "Non empty field in row.");
+
+  uint32_t offset = 0;
+
+  //读取字段数量和null字段数量
+  offset = ReadFromBuffer(buf, offset, fields_nums);
+  offset = ReadFromBuffer(buf, offset, null_nums);
+
+  //构建null bitmap
+  std::vector<uint32_t> null_bitmap(fields_nums, 0);
+  for (uint32_t i = 0; i < null_nums; i++) {
+    uint32_t null_index;
+    offset = ReadFromBuffer(buf, offset, null_index);
+    null_bitmap[null_index] = 1;
+  }
+
+  //反序列化非null字段
+  for (uint32_t i = 0; i < fields_nums; i++) {
+    auto field = ALLOC_P(heap_, Field)(schema->GetColumn(i)->GetType());
+    fields_.push_back(field);
+    if (!null_bitmap[i]) {
+      offset += field->DeserializeFrom(buf + offset, schema->GetColumn(i)->GetType(), &fields_[i], false);
     }
-
-    fields_nums = other.fields_nums;
   }
 
-  //析构函数的纯虚函数
-  virtual ~Row() {
-    delete heap_;
+  return offset;
+}
+
+//获取序列化大小
+uint32_t Row::GetSerializedSize(Schema *schema) const {
+  //确保schema不为空
+  ASSERT(schema != nullptr, "Invalid schema before serialize.");
+
+  //确保fields的大小和schema的列数匹配
+  ASSERT(schema->GetColumnCount() == fields_.size(), "Fields size do not match schema's column size.");
+
+  //如果fields为空，返回0
+  if (fields_.empty())
+    return 0;
+
+  uint32_t size = sizeof(uint32_t) * (2 + null_nums);
+
+  //计算非null字段的序列化大小
+  for (auto &field : fields_) {
+    if (!field->IsNull())
+      size += field->GetSerializedSize();
   }
 
-  /**
-   * Note: Make sure that bytes write to buf is equal to GetSerializedSize()
-   */
-  uint32_t SerializeTo(char *buf, Schema *schema) const;
+  return size;
+}
 
-  uint32_t DeserializeFrom(char *buf, Schema *schema);
-
-  /**
-   * For empty row, return 0
-   * For non-empty row with null fields, eg: |null|null|null|, return header size only
-   * @return
-   */
-  uint32_t GetSerializedSize(Schema *schema) const;
-
-  [[maybe_unused]] void GetKeyFromRow(const Schema *schema, const Schema *key_schema, Row &key_row);
-
-  [[nodiscard]] inline RowId GetRowId() const { return rid_; }
-
-  inline void SetRowId(RowId rid) { rid_ = rid; }
-
-  inline std::vector<Field *> &GetFields() { return fields_; }
-
-  [[nodiscard]] inline Field *GetField(uint32_t idx) const {
-    ASSERT(idx < fields_.size(), "Failed to access field");
-    return fields_[idx];
+void Row::SetFields(const std::vector<Field>& fields) {
+  fields_.clear();
+  for (auto &field : fields) {
+    void *buf = heap_->Allocate(sizeof(Field));
+    fields_.push_back(new (buf) Field(field));
+    if (field.IsNull())
+      null_nums++;
   }
 
-  inline size_t GetFieldCount() const {
-    return fields_.size();
+  fields_nums = fields.size();
+}
+
+void Row::GetKeyFromRow(const Schema *schema, const Schema *key_schema, Row &key_row) {
+  auto columns = key_schema->GetColumns();
+  std::vector<Field> fields;
+  uint32_t idx;
+  for (auto column : columns) {
+    schema->GetColumnIndex(column->GetName(), idx);
+    fields.emplace_back(*this->GetField(idx));
   }
+  key_row.SetFields(fields);
+}
 
-  Row &operator=(const Row &other) = delete;
+//辅助函数，用于向缓冲区中的简化读写操作
+uint32_t Row::WriteToBuffer(char *buf, uint32_t offset, const uint32_t &value) const {
+  memcpy(buf + offset, &value, sizeof(uint32_t));
+  return offset + sizeof(uint32_t);
+}
 
- private:
-  RowId rid_{};
-  std::vector<Field *> fields_; /** Make sure that all field ptr are destructed*/
-
-  MemHeap *heap_ {nullptr};
-  uint32_t fields_nums{0};
-  uint32_t null_nums{0};
-
-  /**
-   * Helper function for SerializeTo and DeserializeFrom to write to a buffer
-   */
-  uint32_t WriteToBuffer(char *buf, uint32_t offset, const uint32_t &value) const;
-
-  /**
-   * Helper function for SerializeTo and DeserializeFrom to read from a buffer
-   */
-  uint32_t ReadFromBuffer(char *buf, uint32_t offset, uint32_t &value) const;
-
-  void SetFields(const std::vector<Field>& fields);
-};
-
-#endif //MINISQL_ROW_H
+uint32_t Row::ReadFromBuffer(char *buf, uint32_t offset, uint32_t &value) const {
+  memcpy(&value, buf + offset, sizeof(uint32_t));
+  return offset + sizeof(uint32_t);
+}
