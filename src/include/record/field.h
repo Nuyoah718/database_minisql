@@ -81,6 +81,11 @@ class Field {
     return *this;
   }
 
+  //设置字符段的值为null
+  void SetNull(bool is_null) {
+    is_null_ = is_null;
+  }
+
   inline bool IsNull() const { return is_null_; }
 
   inline uint32_t GetLength() const { return Type::GetInstance(type_id_)->GetLength(*this); }
