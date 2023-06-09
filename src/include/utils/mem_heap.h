@@ -25,8 +25,9 @@ class SimpleMemHeap : public MemHeap {
  public:
   ~SimpleMemHeap() {
     for (auto allocated_ptr: allocated_memory_set_) {
-      Free(allocated_ptr);
+      free(allocated_ptr);
     }
+    allocated_memory_set_.clear();
   }
 
   void *Allocate(size_t size) override {
