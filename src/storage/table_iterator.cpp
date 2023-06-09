@@ -100,15 +100,13 @@ TableIterator &TableIterator::operator++() {
     cur_page->RLatch();
   }
 
-  if (row != nullptr) {
+  if (row != nullptr)
     delete row;
-  }
 
   row = new Row(next_tuple_rid);
 
-  if (*this != table_heap->End()) {
+  if (*this != table_heap->End())
     table_heap->GetTuple(row, nullptr);
-  }
 
   cur_page->RUnlatch();
   buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
