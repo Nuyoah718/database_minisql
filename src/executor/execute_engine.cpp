@@ -83,8 +83,16 @@ dberr_t ExecuteEngine::ExecutePlan(const AbstractPlanNodeRef &plan, std::vector<
   try {
     executor->Init();
     RowId rid{};
-    Row row{};
-    while (executor->Next(&row, &rid)) {
+    //Row row{};    //**模块五请注意，此处进行了修改，移除此行代码，改为在while循环中再创建Row对象
+    //但是这样存在性能问题（因为每次循环都会创建新的Row对象），但是对性能的影响有多大，仍在研究中
+    //在row.h中不再提供默认的无参构造函数，以防止没有有效的数据
+    //但是需要保证在每次循环的时候都有新的fields数据用于创建新的Row对象，如果不是这样，请对其再次进行修改
+    while (true) {
+      std::vector<Field> fields; // Create a vector to hold fields
+      // Use your method to populate fields vector. This is just a placeholder
+      // PopulateFields(fields);
+      Row row(fields); // Create a new row using the fields
+      if (!executor->Next(&row, &rid)) break;
       if (result_set != nullptr) {
         result_set->push_back(row);
       }
