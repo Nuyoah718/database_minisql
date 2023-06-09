@@ -76,7 +76,7 @@ bool TableHeap::UpdateTuple(const Row &row, const RowId &rid, Transaction *txn) 
     return false;
 
   //获取旧的行
-  Row old_row_;
+  Row old_row_(row);
   if (!page->GetTuple(&old_row_, schema_, txn, lock_manager_)) {
     buffer_pool_manager_->UnpinPage(rid.GetPageId(), false);
     return false;
@@ -106,7 +106,6 @@ bool TableHeap::UpdateTuple(const Row &row, const RowId &rid, Transaction *txn) 
     return true;
   }
 }
-
 
 /**
  * TODO: Student Implement
