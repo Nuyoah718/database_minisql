@@ -23,17 +23,18 @@ bool BitmapPage<PageSize>::AllocatePage(uint32_t &page_offset) {
 //回收已经被分配的页
 template <size_t PageSize>
 bool BitmapPage<PageSize>::DeAllocatePage(uint32_t page_offset) {
-  //检查请求回收的页面是否已经被分配
-  if (allocate_pages.test(page_offset)) {
-    allocate_pages.set(page_offset, 0);    //将相应的位图位设置为0，表示该页已被回收
-    next_free_page_ = page_offset;    //更新下一个可用的页面索引
-    page_allocated_--;    //已分配的页面数量减1
-    return true;    //返回true表示成功回收页面
+  //检查要回收的页面是否已经分配
+  if (!allocate_pages.test(page_offset)) {
+    //如果页面没有被分配，则不能被回收
+    return false;
   }
-  else
-    return false;    //返回false表示无法回收该页面（可能是因为它未被分配）
-}
 
+  //将相应的位图位设置为0，表示该页已经被回收
+  allocate_pages.set(page_offset, 0);
+  next_free_page_ = page_offset;    //更新下一个可用页面索引
+  page_allocated_--;    //将分配的页面数减少 1
+  return true;    //此时已经成功回收该页面
+}
 /**
  * TODO: Student Implement
  */
@@ -51,15 +52,9 @@ bool BitmapPage<PageSize>::IsPageFreeLow(uint32_t byte_index, uint8_t bit_index)
 
 //实例化不同页面大小的BitmapPage类
 template class BitmapPage<64>;
-
 template class BitmapPage<128>;
-
 template class BitmapPage<256>;
-
 template class BitmapPage<512>;
-
 template class BitmapPage<1024>;
-
 template class BitmapPage<2048>;
-
 template class BitmapPage<4096>;
