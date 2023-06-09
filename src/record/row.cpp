@@ -56,7 +56,7 @@ uint32_t Row::DeserializeFrom(char *buf, Schema *schema) {
 
   //反序列化非null字段
   for (uint32_t i = 0; i < fields_nums; i++) {
-    auto field = ALLOC_P(heap, Field)(schema->GetColumn(i)->GetType());
+    auto field = ALLOC_P(heap_, Field)(schema->GetColumn(i)->GetType());
     fields_.push_back(field);
     if (!null_bitmap[i]) {
       offset += field->DeserializeFrom(buf + offset, schema->GetColumn(i)->GetType(), &fields_[i], false);
@@ -78,20 +78,9 @@ uint32_t Row::GetSerializedSize(Schema *schema) const {
   uint32_t size = sizeof(uint32_t) * (2 + null_nums);
   //计算非null字段的序列化大小
   for (auto &field : fields_) {
-    if (!field->IsNull()) size += field->GetSerializedSize();
+    if (!field->IsNull())
+      size += field->GetSerializedSize();
   }
 
   return size;
-}
-
-//从行中获取键
-void Row::GetKeyFromRow(const Schema *schema, const Schema *key_schema, Row &key_row) {
-  auto columns = key_schema->GetColumns();
-  std::vector<Field> fields;
-  uint32_t idx;
-  for (auto column : columns) {
-    schema->GetColumnIndex(column->GetName(), idx);
-    fields.emplace_back(*this->GetField(idx));
-  }
-  key_row = Row(fields);
 }
