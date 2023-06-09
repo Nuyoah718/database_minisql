@@ -70,7 +70,10 @@ class Row {
     fields_nums = other.fields_nums;
   }
 
-  virtual ~Row() { delete heap_; }
+  //析构函数的纯虚函数
+  virtual ~Row() {
+    delete heap_;
+  }
 
   /**
    * Note: Make sure that bytes write to buf is equal to GetSerializedSize()
@@ -99,7 +102,9 @@ class Row {
     return fields_[idx];
   }
 
-  [[nodiscard]] inline size_t GetFieldCount() const { return fields_.size(); }
+  inline size_t GetFieldCount() const {
+    return fields_.size();
+  }
 
   Row &operator=(const Row &other) = delete;
 
@@ -110,6 +115,18 @@ class Row {
   MemHeap *heap_ {nullptr};
   uint32_t fields_nums{0};
   uint32_t null_nums{0};
+
+  /**
+   * Helper function for SerializeTo and DeserializeFrom to write to a buffer
+   */
+  uint32_t WriteToBuffer(char *buf, uint32_t offset, const uint32_t &value) const;
+
+  /**
+   * Helper function for SerializeTo and DeserializeFrom to read from a buffer
+   */
+  uint32_t ReadFromBuffer(char *buf, uint32_t offset, uint32_t &value) const;
+
+  void SetFields(const std::vector<Field>& fields);
 };
 
 #endif //MINISQL_ROW_H
