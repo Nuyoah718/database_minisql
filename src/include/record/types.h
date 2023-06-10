@@ -1,17 +1,20 @@
 #ifndef MINISQL_TYPES_H
 #define MINISQL_TYPES_H
 
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
 #include <exception>
-#include "record/type_id.h"
+
 #include "common/config.h"
+#include "record/type_id.h"
 
 class Field;
 
 enum CmpBool { kFalse = 0, kTrue, kNull };
 
-inline CmpBool GetCmpBool(bool boolean) { return boolean ? CmpBool::kTrue : CmpBool::kFalse; }
+inline CmpBool GetCmpBool(bool boolean) {
+  return boolean ? CmpBool::kTrue : CmpBool::kFalse;
+}
 
 class Type {
  public:
@@ -70,7 +73,7 @@ class Type {
 };
 
 class TypeInt : public Type {
-public:
+ public:
   explicit TypeInt() : Type(TypeId::kTypeInt) {}
 
   virtual uint32_t SerializeTo(const Field &field, char *buf) const override;
@@ -93,7 +96,7 @@ public:
 };
 
 class TypeChar : public Type {
-public:
+ public:
   explicit TypeChar() : Type(TypeId::kTypeChar) {}
 
   virtual uint32_t SerializeTo(const Field &field, char *buf) const override;
@@ -120,7 +123,7 @@ public:
 };
 
 class TypeFloat : public Type {
-public:
+ public:
   explicit TypeFloat() : Type(TypeId::kTypeFloat) {}
 
   virtual uint32_t SerializeTo(const Field &field, char *buf) const override;
@@ -142,4 +145,4 @@ public:
   virtual CmpBool CompareGreaterThanEquals(const Field &left, const Field &right) const override;
 };
 
-#endif //MINISQL_TYPES_H
+#endif  // MINISQL_TYPES_H

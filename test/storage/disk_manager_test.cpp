@@ -3,6 +3,12 @@
 #include "gtest/gtest.h"
 #include "storage/disk_manager.h"
 
+/*这里面对原有的测试代码进行了修改：
+在"DiskManagerTest, BitMapPageTest"测试中，新增了ofs的初始化和更新。
+    在原代码中，ofs的初始值没有明确定义。在新代码中，ofs被初始化为0，这避免了可能的未初始化变量使用问题。
+    在新代码中，每次循环，ofs都会自增1，这样ofs将在每次迭代中使用不同的值。
+在"DiskManagerTest, FreePageAllocationTest"测试中，新增了一段对变量a的操作代码。
+*/
 TEST(DiskManagerTest, BitMapPageTest) {
   const size_t size = 512;
   char buf[size];

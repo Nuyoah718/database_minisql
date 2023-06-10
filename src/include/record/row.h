@@ -22,63 +22,57 @@
  *
  *
  */
-class Row
-{
+class Row {
  public:
   /**
    * Row used for insert
    * Field integrity should check by upper level
    */
-  explicit Row(std::vector<Field> &fields)
-  {
-    //深拷贝
-    for (auto &field : fields)
-      fields_.push_back(new Field(field));
-  }
-
-  void destroy()
-  {
-    if (!fields_.empty())
-    {
-      for (auto field : fields_)
-        delete field;
-      fields_.clear();
+  explicit Row(std::vector<Field> &fields) : heap_(new SimpleMemHeap) {
+    // deep copy
+    for (auto &field : fields) {
+      void *buf = heap_->Allocate(sizeof(Field));
+      fields_.push_back(new (buf) Field(field));
+      if (field.IsNull())
+        null_nums++;
     }
-  }
 
-  ~Row() { destroy(); };
+    fields_nums = fields.size();
+  }
 
   /**
    * Row used for deserialize
    */
-  Row() = default;
+  Row() = delete;
 
   /**
    * Row used for deserialize and update
    */
-  explicit Row(RowId rid) : rid_(rid) {}
+  explicit Row(RowId rid) : rid_(rid), heap_(new SimpleMemHeap) {}
 
   /**
    * Row copy function, deep copy
    */
-  Row(const Row &other)
-  {
-    destroy();
+  Row(const Row &other) : heap_(new SimpleMemHeap) {
+    if (!fields_.empty()) {
+      for (auto &field : fields_) {
+        heap_->Free(field);
+      }
+      fields_.clear();
+    }
     rid_ = other.rid_;
-    for (auto &field : other.fields_)
-      fields_.push_back(new Field(*field));
+    for (auto &field : other.fields_) {
+      void *buf = heap_->Allocate(sizeof(Field));
+      fields_.push_back(new (buf) Field(*field));
+      if (field->IsNull()) null_nums++;
+    }
+
+    fields_nums = other.fields_nums;
   }
 
-  /**
-   * Assign operator, deep copy
-   */
-  Row &operator=(const Row &other)
-  {
-    destroy();
-    rid_ = other.rid_;
-    for (auto &field : other.fields_)
-      fields_.push_back(new Field(*field));
-    return *this;
+  //析构函数的纯虚函数
+  virtual ~Row() {
+    delete heap_;
   }
 
   /**
@@ -95,29 +89,44 @@ class Row
    */
   uint32_t GetSerializedSize(Schema *schema) const;
 
-  void GetKeyFromRow(const Schema *schema, const Schema *key_schema, Row &key_row);
+  [[maybe_unused]] void GetKeyFromRow(const Schema *schema, const Schema *key_schema, Row &key_row);
 
-  inline const RowId GetRowId() const { return rid_; }
+  [[nodiscard]] inline RowId GetRowId() const { return rid_; }
 
   inline void SetRowId(RowId rid) { rid_ = rid; }
 
   inline std::vector<Field *> &GetFields() { return fields_; }
 
-  inline Field *GetField(uint32_t idx) const
-  {
+  [[nodiscard]] inline Field *GetField(uint32_t idx) const {
     ASSERT(idx < fields_.size(), "Failed to access field");
     return fields_[idx];
   }
 
-  inline size_t GetFieldCount() const { return fields_.size(); }
+  inline size_t GetFieldCount() const {
+    return fields_.size();
+  }
+
+  Row &operator=(const Row &other) = delete;
 
  private:
-  static constexpr uint32_t ROW_MAGIC_NUM = 210928;
   RowId rid_{};
-  MemHeap *heap_{nullptr};
+  std::vector<Field *> fields_; /** Make sure that all field ptr are destructed*/
+
+  MemHeap *heap_ {nullptr};
   uint32_t fields_nums{0};
   uint32_t null_nums{0};
-  std::vector<Field *> fields_; /** Make sure that all field ptr are destructed*/
+
+  /**
+   * Helper function for SerializeTo and DeserializeFrom to write to a buffer
+   */
+  uint32_t WriteToBuffer(char *buf, uint32_t offset, const uint32_t &value) const;
+
+  /**
+   * Helper function for SerializeTo and DeserializeFrom to read from a buffer
+   */
+  uint32_t ReadFromBuffer(char *buf, uint32_t offset, uint32_t &value) const;
+
+  void SetFields(const std::vector<Field>& fields);
 };
 
-#endif  // MINISQL_ROW_H
+#endif //MINISQL_ROW_H

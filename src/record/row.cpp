@@ -1,95 +1,125 @@
 #include "record/row.h"
+#include <algorithm>
+#include <cassert>
 
-/**
- * TODO: Student Implement
- */
-uint32_t Row::SerializeTo(char *buf, Schema *schema) const
-{
+//序列化函数
+uint32_t Row::SerializeTo(char *buf, Schema *schema) const {
+  //确保schema不为空
+  ASSERT(schema != nullptr, "Invalid schema before serialize.");
+
+  //确保fields的大小和schema的列数匹配
+  ASSERT(schema->GetColumnCount() == fields_.size(), "Fields size do not match schema's column size.");
+
   uint32_t offset = 0;
 
-  //写入 Row 的 Magic Number
-  //Magic number 是一个预定义的常量
-  uint32_t magic_number = ROW_MAGIC_NUM;
-  memcpy(buf + offset, &magic_number, sizeof(uint32_t));
-  offset += sizeof(uint32_t);
+  //写入字段数量和null字段数量
+  offset = WriteToBuffer(buf, offset, fields_nums);
+  offset = WriteToBuffer(buf, offset, null_nums);
 
-  //写入字段数
-  auto field_count = static_cast<uint32_t>(fields_.size());
-  memcpy(buf + offset, &field_count, sizeof(uint32_t));
-  offset += sizeof(uint32_t);
-
-  //写入空位图
-  for (const auto &field : fields_)
-  {
-    bool is_null = field->IsNull();
-    memcpy(buf + offset, &is_null, sizeof(bool));
-    offset += sizeof(bool);
+  //标记null字段
+  for (uint32_t i = 0; i < fields_.size(); i++) {
+    if (fields_[i]->IsNull()) {
+      offset = WriteToBuffer(buf, offset, i);
+    }
   }
 
-  //写入每个字段
-  for (const auto &field : fields_)
-    offset += field->SerializeTo(buf + offset);
+  //序列化非null字段
+  for (auto &field : fields_) {
+    if (!field->IsNull()) {
+      offset += field->SerializeTo(buf + offset);
+    }
+  }
 
   return offset;
 }
 
+//反序列化函数
+uint32_t Row::DeserializeFrom(char *buf, Schema *schema) {
+  //确保schema不为空
+  ASSERT(schema != nullptr, "Invalid schema before serialize.");
 
-/**
- * TODO: Student Implement
- */
-uint32_t Row::DeserializeFrom(char *buf, Schema *given_schema)
-{
-  //初始化偏移量和字段索引
-  uint32_t offset = 0, field_index = 0;
+  //确保fields为空
+  ASSERT(fields_.empty(), "Non empty field in row.");
 
-  //从输入缓冲区读取字段数量
-  uint32_t num_fields = MACH_READ_UINT32(buf);
-  offset += sizeof(uint32_t);
+  uint32_t offset = 0;
 
-  //读取空字段的数量
-  uint32_t num_null_fields = MACH_READ_UINT32(buf + offset);
-  offset += sizeof(uint32_t);
+  //读取字段数量和null字段数量
+  offset = ReadFromBuffer(buf, offset, fields_nums);
+  offset = ReadFromBuffer(buf, offset, null_nums);
 
-  //创建空字段指示器，初始化为0
-  std::vector<uint32_t> null_field_indicator(num_fields, 0);
-
-  //根据空字段数量设置空字段指示器
-  for (field_index = 0; field_index < num_null_fields; field_index++)
-  {
-    null_field_indicator[MACH_READ_UINT32(buf + offset)] = 1;
-    offset += sizeof(uint32_t);
+  //构建null bitmap
+  std::vector<uint32_t> null_bitmap(fields_nums, 0);
+  for (uint32_t i = 0; i < null_nums; i++) {
+    uint32_t null_index;
+    offset = ReadFromBuffer(buf, offset, null_index);
+    null_bitmap[null_index] = 1;
   }
 
-  //遍历所有字段，创建一个新的字段，并推入fields_向量
-  for (field_index = 0; field_index < num_fields; field_index++)
-  {
-    //如果当前字段不为空，则进行反序列化
-    fields_.push_back(ALLOC_P(heap_, Field)(given_schema->GetColumn(field_index)->GetType()));
-    if (!null_field_indicator[field_index])
-      offset += Field::DeserializeFrom(buf + offset, given_schema->GetColumn(field_index)->GetType(), &fields_[field_index], false);
+  //反序列化非null字段
+  for (uint32_t i = 0; i < fields_nums; i++) {
+    auto field = ALLOC_P(heap_, Field)(schema->GetColumn(i)->GetType());
+    fields_.push_back(field);
+    if (!null_bitmap[i]) {
+      offset += field->DeserializeFrom(buf + offset, schema->GetColumn(i)->GetType(), &fields_[i], false);
+    }
   }
 
-  //返回最后的偏移量
   return offset;
 }
 
+//获取序列化大小
+uint32_t Row::GetSerializedSize(Schema *schema) const {
+  //确保schema不为空
+  ASSERT(schema != nullptr, "Invalid schema before serialize.");
 
-/**
- * TODO: Student Implement
- */
-uint32_t Row::GetSerializedSize(Schema *schema) const
-{
-  uint32_t size = 0;
+  //确保fields的大小和schema的列数匹配
+  ASSERT(schema->GetColumnCount() == fields_.size(), "Fields size do not match schema's column size.");
 
-  //加上 Magic Number 和字段数的大小
-  size += sizeof(uint32_t) * 2;
+  //如果fields为空，返回0
+  if (fields_.empty())
+    return 0;
 
-  //加上空位图的大小
-  size += sizeof(bool) * fields_.size();
+  uint32_t size = sizeof(uint32_t) * (2 + null_nums);
 
-  //加上每个字段的大小
-  for (const auto &field : fields_)
-    size += field->GetSerializedSize();
+  //计算非null字段的序列化大小
+  for (auto &field : fields_) {
+    if (!field->IsNull())
+      size += field->GetSerializedSize();
+  }
 
   return size;
+}
+
+void Row::SetFields(const std::vector<Field>& fields) {
+  fields_.clear();
+  for (auto &field : fields) {
+    void *buf = heap_->Allocate(sizeof(Field));
+    fields_.push_back(new (buf) Field(field));
+    if (field.IsNull())
+      null_nums++;
+  }
+
+  fields_nums = fields.size();
+}
+
+void Row::GetKeyFromRow(const Schema *schema, const Schema *key_schema, Row &key_row) {
+  auto columns = key_schema->GetColumns();
+  std::vector<Field> fields;
+  uint32_t idx;
+  for (auto column : columns) {
+    schema->GetColumnIndex(column->GetName(), idx);
+    fields.emplace_back(*this->GetField(idx));
+  }
+  key_row.SetFields(fields);
+}
+
+//辅助函数，用于向缓冲区中的简化读写操作
+uint32_t Row::WriteToBuffer(char *buf, uint32_t offset, const uint32_t &value) const {
+  memcpy(buf + offset, &value, sizeof(uint32_t));
+  return offset + sizeof(uint32_t);
+}
+
+uint32_t Row::ReadFromBuffer(char *buf, uint32_t offset, uint32_t &value) const {
+  memcpy(&value, buf + offset, sizeof(uint32_t));
+  return offset + sizeof(uint32_t);
 }

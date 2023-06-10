@@ -12,8 +12,7 @@
 static string db_file_name = "table_heap_test.db";
 using Fields = std::vector<Field>;
 
-TEST(TableHeapTest, TableHeapSampleTest)
-{
+TEST(TableHeapTest, TableHeapSampleTest) {
   // init testing instance
   auto disk_mgr_ = new DiskManager(db_file_name);
   auto bpm_ = new BufferPoolManager(DEFAULT_BUFFER_POOL_SIZE, disk_mgr_);
@@ -36,17 +35,28 @@ TEST(TableHeapTest, TableHeapSampleTest)
                    Field(TypeId::kTypeFloat, RandomUtils::RandomFloat(-999.f, 999.f))};
     Row row(*fields);
     ASSERT_TRUE(table_heap->InsertTuple(row, nullptr));
-    if (row_values.find(row.GetRowId().Get()) != row_values.end()) delete row_values[row.GetRowId().Get()];
-    row_values[row.GetRowId().Get()] = fields;
-    size++;
+    if (row_values.find(row.GetRowId().Get()) != row_values.end()) {
+      std::cout << row.GetRowId().Get() << std::endl;
+      ASSERT_TRUE(false);
+    } else {
+      row_values.emplace(row.GetRowId().Get(), fields);
+      size++;
+    }
     delete[] characters;
   }
 
-  // Test finished, free all memory
-  for (auto &pair : row_values) 
-    delete pair.second;
- 
-  delete table_heap;
-  delete bpm_;
-  delete disk_mgr_;
+  ASSERT_EQ(row_nums, row_values.size());
+  ASSERT_EQ(row_nums, size);
+  for (auto row_kv : row_values) {
+    size--;
+    Row row(RowId(row_kv.first));
+    table_heap->GetTuple(&row, nullptr);
+    ASSERT_EQ(schema.get()->GetColumnCount(), row.GetFields().size());
+    for (size_t j = 0; j < schema.get()->GetColumnCount(); j++) {
+      ASSERT_EQ(CmpBool::kTrue, row.GetField(j)->CompareEquals(row_kv.second->at(j)));
+    }
+    // free spaces
+    delete row_kv.second;
+  }
+  ASSERT_EQ(size, 0);
 }

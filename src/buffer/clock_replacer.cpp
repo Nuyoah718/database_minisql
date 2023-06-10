@@ -1,98 +1,70 @@
 #include "buffer/clock_replacer.h"
 
-//构造函数
-ClockReplacer::ClockReplacer(size_t num_pages)
-    :replacer(num_pages,State::EMPTY),
-      index(0),
-      max_size(num_pages) {}
+//构造函数：初始化second_chance数组，pointer指针以及容量capacity
+CLOCKReplacer::CLOCKReplacer(size_t num_pages)
+    :second_chance(num_pages,State::EMPTY),
+      pointer(0),
+      capacity(num_pages) {}
 
-//析构函数
-ClockReplacer::~ClockReplacer() 
-{
-  //无需执行任何操作
-}
+//析构函数：无操作
+CLOCKReplacer::~CLOCKReplacer() {}
 
-//获取牺牲页
-bool ClockReplacer::Victim(frame_id_t *frame_id) 
-{
-  size_t not_empty_count = 0, counter;
-  frame_id_t chosen_frame_id = 0;
+//Victim函数：寻找并返回一个victim frame id
+bool CLOCKReplacer::Victim(frame_id_t *frame_id) {
+  frame_id_t victim_frame_id = 0;
+  bool found = false;
 
-  //遍历找出第一个可用的牺牲页
-  for (counter = 0; counter < max_size; counter++) 
-  {
-    auto id = (index + counter) % max_size;
-    if (replacer[id] == State::EMPTY)
-      continue;
-    else if (replacer[id] == State::ACCESSED) 
-    {
-      not_empty_count++;
-      replacer[id] = State::UNUSED;  //重置为未使用状态
-    } 
-    else if (replacer[id] == State::UNUSED) 
-    {
-      not_empty_count++;
-      //获取第一个牺牲页
-      chosen_frame_id = (chosen_frame_id != 0) ? chosen_frame_id : id;
+  //遍历整个second_chance数组寻找victim
+  for (size_t i = 0; i < 2 * capacity; ++i) {
+    auto id = (pointer + i) % capacity;
+    if (second_chance[id] == State::ACCESSED) {    //如果状态为ACCESSED
+      second_chance[id] = State::UNUSED;    //给予第二次机会，设为UNUSED
+    }
+    else if (second_chance[id] == State::UNUSED && victim_frame_id == 0) { // 如果状态为UNUSED且没有找到victim
+      victim_frame_id = id;    //设置当前frame为victim
     }
   }
 
-  //如果全部为空，返回false
-  if (not_empty_count == 0) 
-  {
-    frame_id = nullptr;
-    return false;
-  }
-
-  if (chosen_frame_id == 0) 
-  {
-    for (counter = 0; counter < max_size; counter++) 
-    {
-      auto id = (index + counter) % max_size;
-      if (replacer[id] == State::UNUSED) 
-      {
-        chosen_frame_id = id;
+  if (victim_frame_id == 0) {    //如果所有的frame都已被访问，指定第一个UNUSED的frame为victim
+    for (size_t i = 0; i < capacity; ++i) {
+      auto id = (pointer + i) % capacity;
+      if (second_chance[id] == State::UNUSED) {
+        victim_frame_id = id;
         break;
       }
     }
   }
 
-  //设置所选页为空
-  replacer[chosen_frame_id] = State::EMPTY;
-  index = chosen_frame_id;
-  *frame_id = chosen_frame_id;
+  //如果找不到victim，返回false
+  if (victim_frame_id == 0) {
+    *frame_id = 0;
+    return false;
+  }
+
+  //将找到的victim frame的状态设置为EMPTY，更新pointer，并返回victim frame id
+  second_chance[victim_frame_id] = State::EMPTY;
+  pointer = (victim_frame_id + 1) % capacity;
+  *frame_id = victim_frame_id;
 
   return true;
 }
 
-//将帧置为锁定状态
-void ClockReplacer::Pin(frame_id_t frame_id) 
-{
-  //从替换器中移除
-  replacer[frame_id % max_size] = State::EMPTY;
+//Pin函数：将指定的frame从replacer中移除
+void CLOCKReplacer::Pin(frame_id_t frame_id) {
+  second_chance[frame_id % capacity] = State::EMPTY;
 }
 
-//取消对帧的锁定
-void ClockReplacer::Unpin(frame_id_t frame_id) 
-{
-  //添加到替换器中
-  replacer[frame_id % max_size] = State::ACCESSED;
+//Unpin函数：将指定的frame添加进replacer
+void CLOCKReplacer::Unpin(frame_id_t frame_id) {
+  second_chance[frame_id % capacity] = State::ACCESSED;
 }
 
-/**
- * @brief 计算那些状态不等于EMPTY的数量
- * @return 返回替换器的当前大小
- */
-size_t ClockReplacer::Size() 
-{
-  return count_if(replacer.begin(), replacer.end(), IsEmpty);
+//Size函数：返回replacer当前的大小，即State不等于EMPTY的frame数量
+size_t CLOCKReplacer::Size() {
+  return count_if(second_chance.begin(), second_chance.end(), IsEmpty);
 }
 
-/**
- * @param item
- * @return 如果item的状态等于State::EMPTY，返回true，否则返回false
- */
-bool ClockReplacer::IsEmpty(ClockReplacer::State& item) 
-{
-  return item == State::EMPTY;
+//IsEmpty函数：检查frame的State是否不等于EMPTY
+bool CLOCKReplacer::IsEmpty(CLOCKReplacer::State& item) {
+  return item != State::EMPTY;
 }

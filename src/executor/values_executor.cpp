@@ -18,7 +18,7 @@ bool ValuesExecutor::Next(Row *row, RowId *rid) {
     for (auto expr : exprs) {
       values.emplace_back(expr->Evaluate(nullptr));
     }
-    *row = Row{values};
+    new(row) Row{values};    //**此处进行了修改，模块五请注意！！（使用placement new）
     cursor_++;
     return true;
   }

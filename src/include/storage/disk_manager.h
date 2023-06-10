@@ -75,7 +75,7 @@ class DiskManager {
   /**
    * Helper function to get disk file size
    */
-  static int GetFileSize(const std::string &file_name);
+  int GetFileSize(const std::string &file_name);
 
   /**
    * Read physical page from disk
@@ -90,7 +90,7 @@ class DiskManager {
   /**
    * Map logical page id to physical page id
    */
-  static page_id_t MapPageId(page_id_t logical_page_id);
+  page_id_t MapPageId(page_id_t logical_page_id);
 
  private:
   // stream to write db file

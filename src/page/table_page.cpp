@@ -120,7 +120,6 @@ void TablePage::ApplyDelete(const RowId &rid, Transaction *txn, LogManager *log_
           tuple_offset - free_space_pointer);
   SetFreeSpacePointer(free_space_pointer + tuple_size);
   SetTupleSize(slot_num, 0);
-  SetTupleCount(GetTupleCount() - 1);
   SetTupleOffsetAtSlot(slot_num, 0);
 
   // Update all tuple offsets.
@@ -143,21 +142,20 @@ void TablePage::RollbackDelete(const RowId &rid, Transaction *txn, LogManager *l
   }
 }
 
-bool TablePage::GetTuple(Row *row, Schema *schema, Transaction *txn, LockManager *lock_manager)
-{
+bool TablePage::GetTuple(Row *row, Schema *schema, Transaction *txn, LockManager *lock_manager) {
   ASSERT(row != nullptr && row->GetRowId().Get() != INVALID_ROWID.Get(), "Invalid row.");
   // Get the current slot number.
   uint32_t slot_num = row->GetRowId().GetSlotNum();
   // If somehow we have more slots than tuples, abort the transaction.
-  if (slot_num >= GetTupleCount())
+  if (slot_num >= GetTupleCount()) {
     return false;
-
+  }
   // Otherwise get the current tuple size too.
   uint32_t tuple_size = GetTupleSize(slot_num);
   // If the tuple is deleted, abort the transaction.
-  if (IsDeleted(tuple_size))
+  if (IsDeleted(tuple_size)) {
     return false;
-
+  }
   // At this point, we have at least a shared lock on the RID. Copy the tuple data into our result.
   uint32_t tuple_offset = GetTupleOffsetAtSlot(slot_num);
   uint32_t __attribute__((unused)) read_bytes = row->DeserializeFrom(GetData() + tuple_offset, schema);
@@ -165,13 +163,10 @@ bool TablePage::GetTuple(Row *row, Schema *schema, Transaction *txn, LockManager
   return true;
 }
 
-bool TablePage::GetFirstTupleRid(RowId *first_rid)
-{
-  //Find and return the first valid tuple.
-  for (uint32_t i = 0; i < GetTupleCount(); i++)
-  {
-    if (!IsDeleted(GetTupleSize(i)))
-    {
+bool TablePage::GetFirstTupleRid(RowId *first_rid) {
+  // Find and return the first valid tuple.
+  for (uint32_t i = 0; i < GetTupleCount(); i++) {
+    if (!IsDeleted(GetTupleSize(i))) {
       first_rid->Set(GetTablePageId(), i);
       return true;
     }
@@ -180,14 +175,11 @@ bool TablePage::GetFirstTupleRid(RowId *first_rid)
   return false;
 }
 
-bool TablePage::GetNextTupleRid(const RowId &cur_rid, RowId *next_rid)
-{
+bool TablePage::GetNextTupleRid(const RowId &cur_rid, RowId *next_rid) {
   ASSERT(cur_rid.GetPageId() == GetTablePageId(), "Wrong table!");
   // Find and return the first valid tuple after our current slot number.
-  for (auto i = cur_rid.GetSlotNum() + 1; i < GetTupleCount(); i++)
-  {
-    if (!IsDeleted(GetTupleSize(i)))
-    {
+  for (auto i = cur_rid.GetSlotNum() + 1; i < GetTupleCount(); i++) {
+    if (!IsDeleted(GetTupleSize(i))) {
       next_rid->Set(GetTablePageId(), i);
       return true;
     }
