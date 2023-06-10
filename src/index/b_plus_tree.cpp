@@ -421,7 +421,9 @@ bool BPlusTree::AdjustRoot(BPlusTreePage *old_root_node) {
  * @return : index iterator
  */
 IndexIterator BPlusTree::Begin() {
-  return IndexIterator();
+  /* page will be unpinned in Dtor */
+  Page *page = FindLeafPage(nullptr, INVALID_PAGE_ID, true); 
+  return IndexIterator(page->GetPageId(), buffer_pool_manager_, 0);
 }
 
 /*
@@ -430,7 +432,12 @@ IndexIterator BPlusTree::Begin() {
  * @return : index iterator
  */
 IndexIterator BPlusTree::Begin(const GenericKey *key) {
-   return IndexIterator();
+  /* remember to use int LeafPage::KeyIndex() */
+   Page *page = FindLeafPage(key);
+   auto *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
+   int idx = leaf_page->KeyIndex(key, processor_);
+
+   return IndexIterator(page->GetPageId(), buffer_pool_manager_, idx);
 }
 
 /*
@@ -439,7 +446,7 @@ IndexIterator BPlusTree::Begin(const GenericKey *key) {
  * @return : index iterator
  */
 IndexIterator BPlusTree::End() {
-  return IndexIterator();
+  return IndexIterator(INVALID_PAGE_ID, buffer_pool_manager_, -1);
 }
 
 /*****************************************************************************

@@ -58,8 +58,26 @@ void LeafPage::SetNextPageId(page_id_t next_page_id) {
  * 二分查找
  */
 int LeafPage::KeyIndex(const GenericKey *key, const KeyManager &KM) {
-  // todo(Tao): leave it later in "index iterator".
-  return 0;
+  if (!KM.CompareKeys(key, KeyAt(0)) > 0) {
+    /* key <= A[0] */
+    return 0;
+  }
+
+  /* find in range [l, r), where A[l] < key <= A[r] */
+  int l = 0, r = GetSize(), m = l + (r - l) / 2;
+  while (l + 1 != r) {
+    int res = KM.CompareKeys(key, KeyAt(m));
+    if (res > 0) {
+      /* key > A[m] */
+      l = m;
+    } else {
+      /* key <= A[m] */
+      r = m;
+    }
+    m = l + (r - l) / 2;
+  }
+
+  return r;
 }
 
 /*
