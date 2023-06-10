@@ -48,7 +48,7 @@ int BPlusTreePage::GetMaxSize() const {
 }
 
 void BPlusTreePage::SetMaxSize(int size) {
-  size_ = size;
+  max_size_ = size;
 }
 
 /*
