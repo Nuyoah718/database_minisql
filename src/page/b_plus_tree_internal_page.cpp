@@ -199,6 +199,7 @@ void InternalPage::CopyNFrom(void *src, int size, BufferPoolManager *buffer_pool
 
     // set child's parentId to this pageId.
     notype_page->SetParentPageId(GetPageId());
+    buffer_pool_manager->UnpinPage(child_page_id, true);
   }
   SetSize(size);
 }
@@ -269,6 +270,7 @@ void InternalPage::MoveAllTo(InternalPage *recipient, GenericKey *middle_key, Bu
 
     // set child's parentId to this pageId.
     notype_page->SetParentPageId(GetPageId());
+    buffer_pool_manager->UnpinPage(child_page_id, true);
   }
 
   /* modify size */
@@ -322,6 +324,7 @@ void InternalPage::CopyLastFrom(GenericKey *key, const page_id_t value, BufferPo
   child_page->SetParentPageId(GetPageId());
   
   SetSize(size + 1);
+  buffer_pool_manager->UnpinPage(child_page->GetPageId(), true);
 }
 
 /*
@@ -367,4 +370,5 @@ void InternalPage::CopyFirstFrom(const page_id_t value, BufferPoolManager *buffe
   child_page->SetParentPageId(GetPageId());
   
   SetSize(size + 1);
+  buffer_pool_manager->UnpinPage(child_page->GetPageId(), true);
 }

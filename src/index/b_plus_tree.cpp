@@ -199,6 +199,7 @@ void BPlusTree::InsertIntoParent(BPlusTreePage *old_node, GenericKey *key, BPlus
   } else {
     ASSERT(false, "size > max_size!!");
   }
+  buffer_pool_manager_->UnpinPage(P->GetPageId(), true);
 }
 
 /*****************************************************************************
@@ -272,16 +273,21 @@ bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
   int size1 = node->GetSize();
   int size2 = sibling_node->GetSize();
 
+  bool deletion_happens = false;
   if (size1 + size2 < node->GetMaxSize()) {
     Coalesce(sibling_node, node, inter_parent, idx, transaction); 
     if (inter_parent->IsRootPage()) {
       AdjustRoot(inter_parent);
     }
-    return true; // deletion in Adjust
+    deletion_happens = ture;
   } else {
     Redistribute(sibling_node, node, idx);
-    return false; // no deletion 
+    deletion_happens = false;
   }
+
+  buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
+  buffer_pool_manager_->UnpinPage(sibling_node->GetPageId(), true);
+  return deletion_happens;
 }
 
 /*
@@ -435,7 +441,7 @@ IndexIterator BPlusTree::End() {
 /*
  * Find leaf page containing particular key, if leftMost flag == true, find
  * the left most leaf page
- * Note: the leaf page is pinned, you need to unpin it after use.
+ * Note: the leaf page is pinned, you need to UNPIN!! it after use.
  */
 Page *BPlusTree::FindLeafPage(const GenericKey *key, page_id_t page_id, bool leftMost) {
   /* input parameter 'page_id' is not used; 
@@ -462,6 +468,7 @@ Page *BPlusTree::FindLeafPage(const GenericKey *key, page_id_t page_id, bool lef
   }
   
   return buffer_pool_manager_->FetchPage(cur_page->GetPageId());
+  /* remember to unpin after use */
 }
 
 /*
