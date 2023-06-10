@@ -193,7 +193,7 @@ void InternalPage::CopyNFrom(void *src, int size, BufferPoolManager *buffer_pool
 
   /* change children's parent to this page */
   for (int i = 0; i < size; ++i) {
-    page_id_t child_page_id = ValueAt(0);
+    page_id_t child_page_id = ValueAt(i);
     auto *page = buffer_pool_manager->FetchPage(child_page_id);
     auto *notype_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
 
