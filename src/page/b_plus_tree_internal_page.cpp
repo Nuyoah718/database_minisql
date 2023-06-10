@@ -251,6 +251,29 @@ page_id_t InternalPage::RemoveAndReturnOnlyChild() {
  * pages that are moved to the recipient
  */
 void InternalPage::MoveAllTo(InternalPage *recipient, GenericKey *middle_key, BufferPoolManager *buffer_pool_manager) {
+  /* recipient -> this -> rightPage */
+  /* check sum of size */
+  int recip_size = recipient->GetSize();
+  int size = GetSize();
+  int sum_size = size + recip_size;
+  ASSERT(sum_size <= GetMaxSize(), "This merge will cause overflow.");
+
+  PairCopy(recipient->PairPtrAt(recip_size), PairPtrAt(0), size);
+  recipient->SetKeyAt(recip_size, middle_key);
+
+  /* change children's parent to recipient */
+  for (int i = recip_size; i < sum_size; ++i) {
+    page_id_t child_page_id = recipient->ValueAt(i);
+    auto *page = buffer_pool_manager->FetchPage(child_page_id);
+    auto *notype_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
+
+    // set child's parentId to this pageId.
+    notype_page->SetParentPageId(GetPageId());
+  }
+
+  /* modify size */
+  recipient->SetSize(sum_size);
+  this->SetSize(0);
 }
 
 /*****************************************************************************
