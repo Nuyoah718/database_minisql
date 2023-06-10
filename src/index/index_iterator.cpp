@@ -5,6 +5,7 @@
 
 IndexIterator::IndexIterator() = default;
 
+/* remember to call: int LeafPage::KeyIndex(const GenericKey *key, const KeyManager &KM) */
 IndexIterator::IndexIterator(page_id_t page_id, BufferPoolManager *bpm, int index)
     : current_page_id(page_id), item_index(index), buffer_pool_manager(bpm) {
   page = reinterpret_cast<LeafPage *>(buffer_pool_manager->FetchPage(current_page_id));
