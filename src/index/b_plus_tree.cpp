@@ -315,6 +315,14 @@ bool BPlusTree::Coalesce(InternalPage *&neighbor_node, InternalPage *&node, Inte
  * @param   node               input from method coalesceOrRedistribute()
  */
 void BPlusTree::Redistribute(LeafPage *neighbor_node, LeafPage *node, int index) {
+  if (index == 0) {
+    /* node -> neighbor */
+    neighbor_node->MoveFirstToEndOf(node);    
+  } else {
+    /* neighbor -> node */
+    neighbor_node->MoveLastToFrontOf(node);
+  }
+  ASSERT(neighbor_node->GetSize() >= neighbor_node->GetMinSize(), "Underflow after redistribution.");
 }
 void BPlusTree::Redistribute(InternalPage *neighbor_node, InternalPage *node, int index) {
 }
