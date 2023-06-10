@@ -89,8 +89,7 @@ void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
   root_page_id_ = id;
   InsertIntoLeaf(key, value);
 
-  /* pending: need to Unpin manually? */
-  // buffer_pool_manager_->UnpinPage(id, true);
+  buffer_pool_manager_->UnpinPage(id, true);
 }
 
 /*
@@ -150,6 +149,7 @@ BPlusTreeInternalPage *BPlusTree::Split(InternalPage *node, Transaction *transac
 
   node->MoveHalfTo(in_page, buffer_pool_manager_);
   
+  buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
   return in_page;
 }
 
@@ -168,6 +168,7 @@ BPlusTreeLeafPage *BPlusTree::Split(LeafPage *node, Transaction *transaction) {
   leaf_page->SetNextPageId(node->GetNextPageId());
   node->SetNextPageId(leaf_page->GetPageId());
   
+  buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
   return leaf_page;
 }
 
