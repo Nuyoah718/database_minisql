@@ -273,13 +273,13 @@ bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
   int size2 = sibling_node->GetSize();
 
   if (size1 + size2 < node->GetMaxSize()) {
-    Coalesce(sibling_node, node, inter_parent, 0, transaction);
+    Coalesce(sibling_node, node, inter_parent, idx, transaction); 
     if (inter_parent->IsRootPage()) {
       AdjustRoot(inter_parent);
     }
     return true; // deletion in Adjust
   } else {
-    Redistribute(sibling_node, node, 0);
+    Redistribute(sibling_node, node, idx);
     return false; // no deletion 
   }
 }
@@ -297,11 +297,51 @@ bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
  */
 bool BPlusTree::Coalesce(LeafPage *&neighbor_node, LeafPage *&node, InternalPage *&parent, int index,
                          Transaction *transaction) {
+  LeafPage *lhs, *rhs;
+  if (index == 0) {
+    /* node -> neighbor */
+    lhs = node;
+    rhs = neighbor_node;
+    index = 1;
+  } else {
+    /* neighbor -> node */
+    lhs = neighbor_node;
+    rhs = node;
+  }
+  rhs->MoveAllTo(lhs);
+  /* delete rhs */
+  buffer_pool_manager_->DeletePage(rhs->GetPageId());
+  /* delete pair in parent */
+  parent->Remove(index);
+  if (parent->GetSize() < parent->GetMinSize()) {
+    CoalesceOrRedistribute(parent, transaction);
+  }
+  
+  /* Q: how to use this return value */
   return false;
 }
 
 bool BPlusTree::Coalesce(InternalPage *&neighbor_node, InternalPage *&node, InternalPage *&parent, int index,
                          Transaction *transaction) {
+  InternalPage *lhs, *rhs;
+  if (index == 0) {
+    /* node -> neighbor */
+    lhs = node;
+    rhs = neighbor_node;
+    index = 1;
+  } else {
+    /* neighbor -> node */
+    lhs = neighbor_node;
+    rhs = node;
+  }
+  rhs->MoveAllTo(lhs, parent->KeyAt(index), buffer_pool_manager_);
+  /* delete pair in parent */
+  parent->Remove(index);
+  if (parent->GetSize() < parent->GetMinSize()) {
+    CoalesceOrRedistribute(parent, transaction);
+  }
+
+  /* Q: how to use this return value */
   return false;
 }
 
