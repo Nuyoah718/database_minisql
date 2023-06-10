@@ -43,12 +43,16 @@ bool BPlusTree::GetValue(const GenericKey *key, std::vector<RowId> &result, Tran
   LeafPage *leaf = reinterpret_cast<LeafPage *> (page->GetData());
   RowId tmp_res = INVALID_ROWID; 
 
+  bool key_exists = false;
   if (leaf->Lookup(key, tmp_res, processor_) ) {
     result.push_back(tmp_res);
-    return true;
+    key_exists = true;
   } else {
-    return false;
+    key_exists = false;
   }
+
+  buffer_pool_manager_->UnpinPage(leaf->GetPageId(), false);
+  return key_exists;
 }
 
 /*****************************************************************************
@@ -123,7 +127,8 @@ bool BPlusTree::InsertIntoLeaf(GenericKey *key, const RowId &value, Transaction 
   /* 4. insert K'(smallest key of L') to parent */
     InsertIntoParent(leaf_page, new_key, new_leaf);
   }
-  
+
+  buffer_pool_manager_->UnpinPage(page->GetPageId(), true);  
   return true;
 }
 
@@ -232,6 +237,7 @@ void BPlusTree::Remove(const GenericKey *key, Transaction *transaction) {
   } else {
     /* do nothing */
   }
+  buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
 }
 
 /* todo
@@ -467,6 +473,7 @@ Page *BPlusTree::FindLeafPage(const GenericKey *key, page_id_t page_id, bool lef
     buffer_pool_manager_->UnpinPage(this_page_id, false);
   }
   
+  buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), false);
   return buffer_pool_manager_->FetchPage(cur_page->GetPageId());
   /* remember to unpin after use */
 }
