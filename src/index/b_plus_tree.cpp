@@ -279,7 +279,7 @@ bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
     if (inter_parent->IsRootPage()) {
       AdjustRoot(inter_parent);
     }
-    deletion_happens = ture;
+    deletion_happens = true;
   } else {
     Redistribute(sibling_node, node, idx);
     deletion_happens = false;
