@@ -100,6 +100,7 @@ void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
   auto *root_page = reinterpret_cast<BPlusTreeLeafPage *>(new_page->GetData());
   root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE);
   root_page_id_ = id;
+  UpdateRootPageId();
 
   InsertIntoLeaf(key, value);
 
@@ -245,6 +246,7 @@ void BPlusTree::Remove(const GenericKey *key, Transaction *transaction) {
     /* delete page if root is empty */
     if (leaf_page->GetSize() == 0) {
       root_page_id_ = INVALID_PAGE_ID;
+      UpdateRootPageId();
       buffer_pool_manager_->DeletePage(leaf_page->GetPageId());
     }
   } else if (leaf_page->GetSize() < leaf_page->GetMinSize()) {
@@ -411,11 +413,13 @@ bool BPlusTree::AdjustRoot(BPlusTreePage *old_root_node) {
     auto *internal_root = reinterpret_cast<InternalPage *>(old_root_node);
     page_id_t only_child_id = internal_root->RemoveAndReturnOnlyChild();
     root_page_id_ = only_child_id;
+    UpdateRootPageId();
   } else if(old_root_node->IsLeafPage() && old_root_node->GetSize() == 0) {
     /* case 2 */
     auto *leaf_root = reinterpret_cast<LeafPage *>(old_root_node);
     leaf_root->RemoveAndDeleteRecord(leaf_root->KeyAt(0),processor_);
     root_page_id_ = INVALID_PAGE_ID;
+    UpdateRootPageId();
   } else {
     // ASSERT(false, "only case1 and case2 is valid.");
     return false;
