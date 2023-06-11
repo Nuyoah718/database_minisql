@@ -89,12 +89,35 @@ CatalogManager::~CatalogManager() {
 }
 
 /**
-* TODO: Student Implement
+* DONE: Student Implement
 */
 dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schema,
                                     Transaction *txn, TableInfo *&table_info) {
-  // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  /* get table_id */
+  table_id_t this_t_id = next_table_id_;
+  next_table_id_++;
+
+  /* create new table */ 
+  TableHeap *new_heap = TableHeap::Create(buffer_pool_manager_, schema, txn, log_manager_, lock_manager_);
+
+  /* TABLE_META */
+  /* set table_metadata */
+  TableMetadata *t_meta = TableMetadata::Create(this_t_id, table_name, new_heap->GetFirstPageId(), schema);
+
+  /* TABLE_INFO */
+  /* set  table_info */
+  TableInfo *t_info = TableInfo::Create();
+  t_info->Init(t_meta, new_heap);
+
+  /* CATALOG_MANAGER */
+  /* set name */
+  table_names_.emplace(table_name, this_t_id);
+  /* add <table_id, table_info*> */
+  tables_.emplace(this_t_id, t_info);
+
+  /* return values */
+  table_info = t_info;
+  return DB_SUCCESS;
 }
 
 /**
