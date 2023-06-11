@@ -25,7 +25,8 @@ BPlusTree::BPlusTree(index_id_t index_id, BufferPoolManager *buffer_pool_manager
     root_page_id_ = root_p_id;
   } else {
     /* create new empty entry */
-    index_roots->Insert(index_id, INVALID_PAGE_ID);
+    UpdateRootPageId(1); // insert <index_id_, root_page_id_>
+    // index_roots->Insert(index_id, INVALID_PAGE_ID); // INVALID_PAGE at beginning, update when insert
   }
   
   buffer_pool_manager->UnpinPage(INDEX_ROOTS_PAGE_ID, true);
@@ -99,6 +100,7 @@ void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
   auto *root_page = reinterpret_cast<BPlusTreeLeafPage *>(new_page->GetData());
   root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE);
   root_page_id_ = id;
+
   InsertIntoLeaf(key, value);
 
   buffer_pool_manager_->UnpinPage(id, true);
@@ -507,6 +509,15 @@ Page *BPlusTree::FindLeafPage(const GenericKey *key, page_id_t page_id, bool lef
  * updating it.
  */
 void BPlusTree::UpdateRootPageId(int insert_record) {
+  auto *index_roots = reinterpret_cast<IndexRootsPage *>(buffer_pool_manager_->FetchPage(INDEX_ROOTS_PAGE_ID));
+  
+  if (insert_record) {
+    index_roots->Insert(index_id_, root_page_id_);
+  } else {
+    /* update */
+    index_roots->Update(index_id_, root_page_id_);
+  }
+  buffer_pool_manager_->UnpinPage(INDEX_ROOTS_PAGE_ID, true);
 }
 
 /**
