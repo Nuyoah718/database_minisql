@@ -284,11 +284,14 @@ dberr_t CatalogManager::DropIndex(const string &table_name, const string &index_
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 dberr_t CatalogManager::FlushCatalogMetaPage() const {
-  // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  auto *buf = reinterpret_cast<char *>(buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID)->GetData());
+  catalog_meta_->SerializeTo(buf);
+
+  buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID, true);
+  return DB_SUCCESS;
 }
 
 /**
