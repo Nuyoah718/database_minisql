@@ -278,9 +278,6 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
     return DB_TABLE_NOT_EXIST;
   }
 
-  /* set this index_id */
-  index_id_t this_i_id = next_index_id_;
-  next_index_id_++;
   /* get TableInfo* to get schema */
   table_id_t t_id = table_names_[table_name];
   TableInfo *t_info = nullptr;
@@ -295,11 +292,16 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   for (int i = 0; i < index_keys.size(); ++i) {
     uint32_t idx = -1;
     if (t_schema->GetColumnIndex(index_keys[i], idx) != DB_SUCCESS) {
-      ASSERT(false, "index_keys cannot be found.");
+      /* when index_keys are not valid, return */
+      return DB_COLUMN_NAME_NOT_EXIST;
     }
     key_map[i] = idx;
   }
 
+  /** INDEX_META **/
+  /* set this index_id */
+  index_id_t this_i_id = next_index_id_;
+  next_index_id_++;
   /* set index_metadata */
   IndexMetadata *i_meta = IndexMetadata::Create(this_i_id, index_name, t_id, key_map);
 
