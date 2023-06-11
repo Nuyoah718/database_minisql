@@ -98,11 +98,24 @@ dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schem
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 dberr_t CatalogManager::GetTable(const string &table_name, TableInfo *&table_info) {
   // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  auto itr = table_names_.find(table_name);
+  if (itr == table_names_.end()) {
+    table_info = nullptr;
+    return DB_TABLE_NOT_EXIST;
+  }
+
+  /* table is found */
+  table_id_t t_id = itr->second;
+  auto tables_itr = tables_.find(t_id);
+  ASSERT(tables_itr != tables_.end(), "table_id in table_names should be in tables_.");
+
+  table_info = tables_itr->second;
+  
+  return DB_SUCCESS;
 }
 
 /**
