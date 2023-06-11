@@ -126,12 +126,10 @@ dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schem
   /* add <t_id, meta_p_id> to cata_meta */
   catalog_meta_->table_meta_pages_[this_t_id] = t_meta_p_id;
   catalog_meta_->table_meta_pages_[next_table_id_] = INVALID_PAGE_ID; // mark the end
-  char *cata_meta_buf = buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID)->GetData();
-  catalog_meta_->SerializeTo(cata_meta_buf);
+  FlushCatalogMetaPage();
 
-  /* Unpin pages */
-  buffer_pool_manager_->UnpinPage(t_meta_p_id);
-  buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID);
+  /* Unpin t_meta page */
+  buffer_pool_manager_->UnpinPage(t_meta_p_id, true);
   /* return values */
   table_info = t_info;
   return DB_SUCCESS;
@@ -221,12 +219,10 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   /* add <i_id, meta_p_id> to cata_meta */
   catalog_meta_->table_meta_pages_[this_i_id] = i_meta_p_id;
   catalog_meta_->table_meta_pages_[next_index_id_] = INVALID_PAGE_ID; // mark the end
-  char *cata_meta_buf = buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID)->GetData();
-  catalog_meta_->SerializeTo(cata_meta_buf);
+  FlushCatalogMetaPage();
 
-  /* Unpin pages */
-  buffer_pool_manager_->UnpinPage(i_meta_p_id);
-  buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID);
+  /* Unpin i_meta page */
+  buffer_pool_manager_->UnpinPage(i_meta_p_id, true);
   /* return values */
   index_info = i_info;
   return DB_SUCCESS;
