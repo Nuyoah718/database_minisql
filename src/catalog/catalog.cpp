@@ -357,19 +357,73 @@ dberr_t CatalogManager::GetTableIndexes(const std::string &table_name, std::vect
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 dberr_t CatalogManager::DropTable(const string &table_name) {
-  // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  /* use table_name to find table_id */
+  if (table_names_.find(table_name) == table_names_.end()) {
+    // table not found
+    return DB_TABLE_NOT_EXIST;
+  }
+  table_id_t t_id = table_names_.at(table_name);
+  return DropTable(t_id);  
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 dberr_t CatalogManager::DropIndex(const string &table_name, const string &index_name) {
-  // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  /* check index exists */
+  IndexInfo *i_info_tobe_delete = nullptr;
+  auto error_num = GetIndex(table_name, index_name, i_info_tobe_delete);
+  if (error_num != DB_SUCCESS) {
+    return error_num;
+  }
+  ASSERT(index_names_.find(table_name) != index_names_.end() 
+        && index_names_[table_name].find(index_name) != index_names_[table_name].end(),
+        "<Index_name, index_id> must exists.");
+
+  /** CATALOG_MAGENER **/
+  /* delete <t_name, i_name, i_id> in CatalogManage */
+  index_id_t i_id_tobe_delete = index_names_[table_name][index_name];
+  index_names_[table_name].erase(index_name);
+  /* delete <i_id, i_info> in CatalogManager */
+  indexes_.erase(i_id_tobe_delete);
+
+  /** CATALOG_META **/
+  /* delete <index_id, page_id> and delete this page_id in bpm */
+  catalog_meta_->DeleteIndexMetaPage(buffer_pool_manager_, i_id_tobe_delete);
+  
+  /** IndexInfo* itself **/
+  delete i_info_tobe_delete;
+  
+  return DB_SUCCESS;
+}
+  
+
+/* only use in DropTable(const std::string &table_name) */
+dberr_t CatalogManager::DropTable(table_id_t table_id) {
+  /* check table exists */
+  TableInfo *t_info_tobe_delete = nullptr;
+  auto error_num = GetTable(table_id, t_info_tobe_delete);
+  if (error_num != DB_SUCCESS) {
+    return error_num;
+  }
+
+  /** CATALOG_MAGENER **/
+  /* delete <t_name, t_id> in CatalogManage */
+  //// table_names_.erase(table_name); // this line is in DropTable(table_name);
+  /* delete <t_id, t_info> in CatalogManager */
+  tables_.erase(table_id);
+
+  /** CATALOG_META **/
+  /* delete <table_id, page_id> and delete this page_id in bpm */
+  catalog_meta_->DeleteTableMetaPage(buffer_pool_manager_, table_id);
+
+  /** TableInfo* itself **/
+  delete t_info_tobe_delete;
+
+  return DB_SUCCESS;
 }
 
 /**

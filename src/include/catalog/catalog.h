@@ -58,6 +58,18 @@ class CatalogMeta {
     return true;
   }
 
+  /**
+   * Delete table meta data and its meta page.
+   */
+  bool DeleteTableMetaPage(BufferPoolManager *bpm, table_id_t table_id) {
+    if (table_meta_pages_.find(table_id) == table_meta_pages_.end()) {
+      return false;
+    }
+    bpm->DeletePage(table_meta_pages_[table_id]);
+    table_meta_pages_.erase(table_id);
+    return true;
+  }
+
  private:
   CatalogMeta();
 
@@ -97,6 +109,7 @@ class CatalogManager {
   dberr_t DropIndex(const std::string &table_name, const std::string &index_name);
 
  private:
+  /* only use in DropTable(const std::string &table_name) */
   dberr_t DropTable(table_id_t table_id);
 
   dberr_t FlushCatalogMetaPage() const;
