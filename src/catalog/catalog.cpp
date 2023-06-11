@@ -272,11 +272,16 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
                                     IndexInfo *&index_info, const string &index_type) {
   /* get index_id */
   ASSERT(next_index_id_ == catalog_meta_->GetNextIndexId(), "should be same.");
+
+  /* check table exists */
+  if (table_names_.find(table_name) == table_names_.end()) {
+    return DB_TABLE_NOT_EXIST;
+  }
+
+  /* set this index_id */
   index_id_t this_i_id = next_index_id_;
   next_index_id_++;
-
   /* get TableInfo* to get schema */
-  ASSERT(table_names_.find(table_name) != table_names_.end(), "table_name does not exists.");
   table_id_t t_id = table_names_[table_name];
   TableInfo *t_info = nullptr;
   if (!GetTable(t_id, t_info)) {
@@ -407,9 +412,18 @@ dberr_t CatalogManager::LoadIndex(const index_id_t index_id, const page_id_t pag
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 dberr_t CatalogManager::GetTable(const table_id_t table_id, TableInfo *&table_info) {
-  // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  auto itr = tables_.find(table_id);
+  if (itr == tables_.end()) {
+    table_info = nullptr;
+    return DB_TABLE_NOT_EXIST;
+  }
+
+  /* table is found */
+  table_id_t t_id = itr->first;
+  table_info = itr->second;
+  
+  return DB_SUCCESS;
 }
