@@ -188,6 +188,9 @@ CatalogManager::~CatalogManager() {
 */
 dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schema,
                                     Transaction *txn, TableInfo *&table_info) {
+  if (table_names_.find(table_name) != table_names_.end()) {
+    return DB_TABLE_ALREADY_EXIST;
+  }
   /* get table_id */
   ASSERT(next_table_id_ == catalog_meta_->GetNextTableId(), "should be same.");
   table_id_t this_t_id = next_table_id_;
@@ -270,12 +273,22 @@ dberr_t CatalogManager::GetTables(vector<TableInfo *> &tables) const {
 dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string &index_name,
                                     const std::vector<std::string> &index_keys, Transaction *txn,
                                     IndexInfo *&index_info, const string &index_type) {
-  /* get index_id */
   ASSERT(next_index_id_ == catalog_meta_->GetNextIndexId(), "should be same.");
 
   /* check table exists */
   if (table_names_.find(table_name) == table_names_.end()) {
     return DB_TABLE_NOT_EXIST;
+  }
+  /* check index not exists */
+  std::unordered_map<std::string, index_id_t>  index_pageId;
+  auto itr = index_names_.find(table_name);
+  if (itr != index_names_.end()) {
+    /* table_name have index-pageid pairs */
+    index_pageId = index_names_.at(table_name);
+    if (index_pageId.find(index_name) != index_pageId.end()) {
+      /* index_name is found */
+      return DB_INDEX_ALREADY_EXIST;
+    }
   }
 
   /* get TableInfo* to get schema */
