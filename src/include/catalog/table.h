@@ -42,7 +42,7 @@ class TableMetadata {
   static constexpr uint32_t TABLE_METADATA_MAGIC_NUM = 344528;
   table_id_t table_id_;
   std::string table_name_;
-  page_id_t root_page_id_;
+  page_id_t root_page_id_;   // the first page of table_heap
   Schema *schema_;
 };
 
