@@ -72,7 +72,93 @@ CatalogMeta::CatalogMeta() {}
 CatalogManager::CatalogManager(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager,
                                LogManager *log_manager, bool init)
     : buffer_pool_manager_(buffer_pool_manager), lock_manager_(lock_manager), log_manager_(log_manager) {
-//    ASSERT(false, "Not Implemented yet");
+  if (init) {
+    catalog_meta_ = CatalogMeta::NewInstance();
+    next_index_id_ = 0;
+    next_table_id_ = 0;
+    return;
+  }
+  /* 在后续重新打开数据库实例时，从数据库文件中加载所有的表和索引信息，
+    * 构建TableInfo和IndexInfo信息置于内存中。
+    */
+  Page *catalog_meta_page = buffer_pool_manager->FetchPage(CATALOG_META_PAGE_ID);
+  char *buf = catalog_meta_page->GetData();
+  catalog_meta_->DeserializeFrom(buf);
+
+  /* construct every table_info */
+  for (auto tableID_pageID:catalog_meta_->table_meta_pages_) {
+    table_id_t t_id = tableID_pageID.first;
+    page_id_t p_id = tableID_pageID.second;
+    if (p_id == INVALID_PAGE_ID) {
+      /* the end() */
+      break;
+    }
+
+    /* construct t_metadata */
+    Page *page = buffer_pool_manager->FetchPage(p_id);
+    char *buf = page->GetData(); // deserialize from
+    TableMetadata *t_meta = nullptr;
+    TableMetadata::DeserializeFrom(buf, t_meta);
+    
+    /* construct t_heap */
+    TableHeap *t_heap = TableHeap::Create(buffer_pool_manager, 
+                        t_meta->GetFirstPageId(), t_meta->GetSchema(),
+                        log_manager, lock_manager);
+    
+    /* construct table_info */
+    TableInfo *t_info = TableInfo::Create();
+    t_info->Init(t_meta, t_heap);
+    
+    /** CATALOG_MANAGER **/
+    // add <t_name, t_id> and <t_id, t_info>
+    table_names_.emplace(t_info->GetTableName(), t_id);
+    tables_.emplace(t_id, t_info); 
+
+    buffer_pool_manager->UnpinPage(p_id, false);
+  }
+
+  /* construct every index_info */
+  for (auto indexID_pageID:catalog_meta_->index_meta_pages_) {
+    table_id_t i_id = indexID_pageID.first;
+    page_id_t p_id = indexID_pageID.second;
+    if (p_id == INVALID_PAGE_ID) {
+      /* the end() */
+      break;
+    }
+
+    /* construct i_metadata */
+    Page *page = buffer_pool_manager->FetchPage(p_id);
+    char *buf = page->GetData(); // deserialize from
+    IndexMetadata *i_meta = nullptr;
+    IndexMetadata::DeserializeFrom(buf, i_meta);
+
+    /* get root_page_id from INVALID_PAGE_ID */
+    auto *idx_roots = reinterpret_cast<IndexRootsPage *>(buffer_pool_manager->FetchPage(INDEX_ROOTS_PAGE_ID));
+    page_id_t index_root_page_id = INVALID_PAGE_ID;
+    
+    if (!idx_roots->GetRootId(i_id, &index_root_page_id)) {
+      ASSERT(false, "fail to find index root page.");
+    }
+
+    /* Get table_info of t_id */
+    table_id_t t_id = i_meta->GetTableId();
+    TableInfo *t_info = tables_[t_id];
+
+    /* reconstruct Index* in IndexInfo::Init() */
+    IndexInfo *i_info = IndexInfo::Create();
+    i_info->Init(i_meta, t_info, buffer_pool_manager);
+
+    /** CATALOG_MANAGER **/
+    /* insert <i_id, i_info> */
+    indexes_.emplace(i_id, i_info);
+    /* insert <t_name, <i_name, i_id>> */
+    index_names_[t_info->GetTableName()][i_info->GetIndexName()] = i_id;
+
+    buffer_pool_manager->UnpinPage(p_id, false);
+  }
+  
+  buffer_pool_manager->UnpinPage(INDEX_ROOTS_PAGE_ID, true);
+  buffer_pool_manager->UnpinPage(CATALOG_META_PAGE_ID, true);
 }
 
 CatalogManager::~CatalogManager() {
