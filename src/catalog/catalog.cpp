@@ -284,7 +284,7 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   /* get TableInfo* to get schema */
   table_id_t t_id = table_names_[table_name];
   TableInfo *t_info = nullptr;
-  if (!GetTable(t_id, t_info)) {
+  if (GetTable(t_id, t_info) != DB_SUCCESS) {
     ASSERT(false, "GetTable Fails.");
   }
   Schema *t_schema = t_info->GetSchema();
@@ -422,7 +422,6 @@ dberr_t CatalogManager::GetTable(const table_id_t table_id, TableInfo *&table_in
   }
 
   /* table is found */
-  table_id_t t_id = itr->first;
   table_info = itr->second;
   
   return DB_SUCCESS;
