@@ -94,27 +94,44 @@ CatalogManager::~CatalogManager() {
 dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schema,
                                     Transaction *txn, TableInfo *&table_info) {
   /* get table_id */
+  ASSERT(next_table_id_ == catalog_meta_->GetNextTableId(), "should be same.");
   table_id_t this_t_id = next_table_id_;
   next_table_id_++;
 
   /* create new table */ 
   TableHeap *new_heap = TableHeap::Create(buffer_pool_manager_, schema, txn, log_manager_, lock_manager_);
 
-  /* TABLE_META */
+  /** TABLE_META **/
   /* set table_metadata */
   TableMetadata *t_meta = TableMetadata::Create(this_t_id, table_name, new_heap->GetFirstPageId(), schema);
 
-  /* TABLE_INFO */
+  /** TABLE_INFO **/
   /* set  table_info */
   TableInfo *t_info = TableInfo::Create();
   t_info->Init(t_meta, new_heap);
 
-  /* CATALOG_MANAGER */
+  /** CATALOG_MANAGER **/
   /* set name */
   table_names_.emplace(table_name, this_t_id);
   /* add <table_id, table_info*> */
   tables_.emplace(this_t_id, t_info);
 
+  /** CATALOG_META **/
+  /* serialize t_meta */
+  page_id_t t_meta_p_id = INVALID_PAGE_ID;
+  Page *t_meta_page = buffer_pool_manager_->NewPage(t_meta_p_id);
+  char *t_meta_buf = t_meta_page->GetData();
+  t_meta->SerializeTo(t_meta_buf);
+  
+  /* add <t_id, meta_p_id> to cata_meta */
+  catalog_meta_->table_meta_pages_[this_t_id] = t_meta_p_id;
+  catalog_meta_->table_meta_pages_[next_table_id_] = INVALID_PAGE_ID; // mark the end
+  char *cata_meta_buf = buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID)->GetData();
+  catalog_meta_->SerializeTo(cata_meta_buf);
+
+  /* Unpin pages */
+  buffer_pool_manager_->UnpinPage(t_meta_p_id);
+  buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID);
   /* return values */
   table_info = t_info;
   return DB_SUCCESS;
