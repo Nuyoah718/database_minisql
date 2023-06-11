@@ -376,11 +376,32 @@ dberr_t CatalogManager::GetIndex(const std::string &table_name, const std::strin
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 dberr_t CatalogManager::GetTableIndexes(const std::string &table_name, std::vector<IndexInfo *> &indexes) const {
-  // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  ASSERT(indexes.size() == 0, "Input indexes should be empty.");
+  /* check table_name exists */
+  auto itr = index_names_.find(table_name);
+  if (itr == index_names_.end()) {
+    return DB_TABLE_NOT_EXIST;
+  }
+
+  /* find add index_id of table_name */
+  auto idxNames_pageId = itr->second;
+  std::vector<index_id_t> idx_id_vec;
+  for (auto pair : idxNames_pageId) {
+    index_id_t idx_id = pair.second;
+    idx_id_vec.push_back(idx_id);
+  }
+
+  /* construct vec<IndexInfo *> from vec<IndexID> */
+  for (index_id_t i_id : idx_id_vec) {
+    auto itr_i_info = indexes_.find(i_id);
+    ASSERT(itr_i_info != indexes_.end(), "index id is found, so it must exists in indexes_ ");
+    indexes.push_back(itr_i_info->second);
+  }
+  
+  ASSERT(indexes.size() == indexes_.size(), "Index should be same size.");
 }
 
 /**
