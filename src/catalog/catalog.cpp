@@ -1,4 +1,5 @@
 #include "catalog/catalog.h"
+#include "page/index_roots_page.h"
 
 void CatalogMeta::SerializeTo(char *buf) const {
     ASSERT(GetSerializedSize() <= PAGE_SIZE, "Failed to serialize catalog metadata to disk.");
