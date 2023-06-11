@@ -324,8 +324,8 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   i_meta->SerializeTo(i_meta_buf);
   
   /* add <i_id, meta_p_id> to cata_meta */
-  catalog_meta_->table_meta_pages_[this_i_id] = i_meta_p_id;
-  catalog_meta_->table_meta_pages_[next_index_id_] = INVALID_PAGE_ID; // mark the end
+  catalog_meta_->index_meta_pages_[this_i_id] = i_meta_p_id;
+  catalog_meta_->index_meta_pages_[next_index_id_] = INVALID_PAGE_ID; // mark the end
   FlushCatalogMetaPage();
 
   /* Unpin i_meta page */
