@@ -114,8 +114,10 @@ class CatalogManager {
 
   dberr_t FlushCatalogMetaPage() const;
 
+  /* only use this in Constructor. reconstruct tableInfo from catalog meta */
   dberr_t LoadTable(const table_id_t table_id, const page_id_t page_id);
 
+  /* only use this in Constructor. reconstruct indexInfo from catalog meta */
   dberr_t LoadIndex(const index_id_t index_id, const page_id_t page_id);
 
   dberr_t GetTable(const table_id_t table_id, TableInfo *&table_info);
