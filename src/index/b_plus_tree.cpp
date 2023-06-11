@@ -8,7 +8,7 @@
 #include "page/index_roots_page.h"
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 BPlusTree::BPlusTree(index_id_t index_id, BufferPoolManager *buffer_pool_manager, const KeyManager &KM,
                      int leaf_max_size, int internal_max_size)
@@ -17,6 +17,18 @@ BPlusTree::BPlusTree(index_id_t index_id, BufferPoolManager *buffer_pool_manager
       processor_(KM),
       leaf_max_size_(leaf_max_size),
       internal_max_size_(internal_max_size) {
+  auto *index_roots = reinterpret_cast<IndexRootsPage *>(buffer_pool_manager->FetchPage(INDEX_ROOTS_PAGE_ID));
+
+  /* check if this index exsist */
+  page_id_t root_p_id = INVALID_PAGE_ID;
+  if (index_roots->GetRootId(index_id, &root_p_id)) {
+    root_page_id_ = root_p_id;
+  } else {
+    /* create new empty entry */
+    index_roots->Insert(index_id, INVALID_PAGE_ID);
+  }
+  
+  buffer_pool_manager->UnpinPage(INDEX_ROOTS_PAGE_ID, true);
 }
 
 void BPlusTree::Destroy(page_id_t current_page_id) {
