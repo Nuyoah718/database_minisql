@@ -167,13 +167,69 @@ dberr_t CatalogManager::GetTables(vector<TableInfo *> &tables) const {
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string &index_name,
                                     const std::vector<std::string> &index_keys, Transaction *txn,
                                     IndexInfo *&index_info, const string &index_type) {
-  // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  /* get index_id */
+  ASSERT(next_index_id_ == catalog_meta_->GetNextIndexId(), "should be same.");
+  index_id_t this_i_id = next_index_id_;
+  next_index_id_++;
+
+  /* get TableInfo* to get schema */
+  ASSERT(table_names_.find(table_name) != table_names_.end(), "table_name does not exists.");
+  table_id_t t_id = table_names_[table_name];
+  TableInfo *t_info = nullptr;
+  if (!GetTable(t_id, t_info)) {
+    ASSERT(false, "GetTable Fails.");
+  }
+  Schema *t_schema = t_info->GetSchema();
+
+  /** INDEX_META **/
+  /* change vector<string> to vector<uint32> */
+  std::vector<uint32_t> key_map(index_keys.size());
+  for (int i = 0; i < index_keys.size(); ++i) {
+    uint32_t idx = -1;
+    if (t_schema->GetColumnIndex(index_keys[i], idx) != DB_SUCCESS) {
+      ASSERT(false, "index_keys cannot be found.");
+    }
+    key_map[i] = idx;
+  }
+
+  /* set index_metadata */
+  IndexMetadata *i_meta = IndexMetadata::Create(this_i_id, index_name, t_id, key_map);
+
+  /** INDEX_INFO **/
+  /* set  index_info */
+  IndexInfo *i_info = IndexInfo::Create();
+  i_info->Init(i_meta, t_info, buffer_pool_manager_);
+
+  /** CATALOG_MANAGER **/
+  /* set index name */
+  index_names_[table_name][index_name] = this_i_id;
+  /* add <index_id, index_info*> */
+  indexes_.emplace(this_i_id, i_info);
+
+  /** CATALOG_META **/
+  /* serialize i_meta */
+  page_id_t i_meta_p_id = INVALID_PAGE_ID;
+  Page *i_meta_page = buffer_pool_manager_->NewPage(i_meta_p_id);
+  char *i_meta_buf = i_meta_page->GetData();
+  i_meta->SerializeTo(i_meta_buf);
+  
+  /* add <i_id, meta_p_id> to cata_meta */
+  catalog_meta_->table_meta_pages_[this_i_id] = i_meta_p_id;
+  catalog_meta_->table_meta_pages_[next_index_id_] = INVALID_PAGE_ID; // mark the end
+  char *cata_meta_buf = buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID)->GetData();
+  catalog_meta_->SerializeTo(cata_meta_buf);
+
+  /* Unpin pages */
+  buffer_pool_manager_->UnpinPage(i_meta_p_id);
+  buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID);
+  /* return values */
+  index_info = i_info;
+  return DB_SUCCESS;
 }
 
 /**
