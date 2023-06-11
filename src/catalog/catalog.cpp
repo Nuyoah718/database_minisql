@@ -173,6 +173,14 @@ CatalogManager::~CatalogManager() {
     delete iter.second;
   }
   **/
+  FlushCatalogMetaPage();
+  // delete catalog_meta_;
+  // for (auto iter : tables_) {
+  //   delete iter.second;
+  // }
+  // for (auto iter : indexes_) {
+  //   delete iter.second;
+  // }
 }
 
 /**
