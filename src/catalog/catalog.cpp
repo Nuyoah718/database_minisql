@@ -160,12 +160,30 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 dberr_t CatalogManager::GetIndex(const std::string &table_name, const std::string &index_name,
                                  IndexInfo *&index_info) const {
-  // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  auto outter_itr = index_names_.find(table_name);
+  if (outter_itr == index_names_.end()) {
+    index_info = nullptr;
+    return DB_INDEX_NOT_FOUND;
+  }
+  auto t_index_names = outter_itr->second;
+  auto inner_itr = t_index_names.find(index_name);
+  if (inner_itr == t_index_names.end()) {
+    index_info = nullptr;
+    return DB_INDEX_NOT_FOUND;
+  }
+
+  /* index is found */
+  index_id_t i_id = inner_itr->second;
+  auto index_itr = indexes_.find(i_id);
+  ASSERT(index_itr != indexes_.end(), "index_id in index_names should be in indexes_.");
+
+  index_info = index_itr->second;
+  
+  return DB_SUCCESS;
 }
 
 /**
