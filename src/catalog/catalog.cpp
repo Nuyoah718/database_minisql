@@ -157,11 +157,16 @@ dberr_t CatalogManager::GetTable(const string &table_name, TableInfo *&table_inf
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */
 dberr_t CatalogManager::GetTables(vector<TableInfo *> &tables) const {
-  // ASSERT(false, "Not Implemented yet");
-  return DB_FAILED;
+  ASSERT(tables.size() == 0, "Input table should be empty.");
+  for (auto itr = tables_.begin(); itr != tables_.end(); itr++) {
+    tables.push_back(itr->second);
+  }
+
+  ASSERT(tables_.size() == tables.size(), "All TableInfo should be in vector.");
+  return DB_SUCCESS;
 }
 
 /**
