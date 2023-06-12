@@ -200,9 +200,27 @@ void BPlusTree::InsertIntoParent(BPlusTreePage *old_node, GenericKey *key, BPlus
                                  Transaction *transaction) {
   /* 1. if old_node is Root, create new root */
   if (old_node->IsRootPage()) {
-    // create new page 
-    // populate new root page adopt this two
-    // change this two's parent to new root
+    page_id_t old_p_id = old_node->GetPageId();
+    page_id_t new_p_id = new_node->GetPageId();
+
+    /* create new page */
+    page_id_t new_root_p_id = INVALID_PAGE_ID;
+    auto *new_root = reinterpret_cast<InternalPage *>(buffer_pool_manager_->NewPage(new_root_p_id));
+    new_root->Init(new_root_p_id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE);
+
+    /* populate new root page adopt this two */
+    new_root->PopulateNewRoot(old_p_id, key, new_p_id);
+
+    /* change this two's parent to new root */
+    old_node->SetParentPageId(new_root_p_id);
+    new_node->SetParentPageId(new_root_p_id);
+    
+
+    /* change root_page_id */
+    root_page_id_ = new_root_p_id;
+    UpdateRootPageId();
+
+    buffer_pool_manager_->UnpinPage(new_root_p_id, true);
     return;
   }
   Page *P = buffer_pool_manager_->FetchPage(old_node->GetParentPageId());
