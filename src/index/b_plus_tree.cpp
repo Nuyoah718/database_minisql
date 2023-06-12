@@ -499,8 +499,9 @@ Page *BPlusTree::FindLeafPage(const GenericKey *key, page_id_t page_id, bool lef
     buffer_pool_manager_->UnpinPage(this_page_id, false);
   }
   
-  buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), false);
-  return buffer_pool_manager_->FetchPage(cur_page->GetPageId());
+  page_id_t ret_leaf_p_id = cur_page->GetPageId();
+  buffer_pool_manager_->UnpinPage(ret_leaf_p_id, false);
+  return buffer_pool_manager_->FetchPage(ret_leaf_p_id);
   /* remember to unpin after use */
 }
 
