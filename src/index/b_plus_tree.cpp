@@ -258,7 +258,17 @@ void BPlusTree::Remove(const GenericKey *key, Transaction *transaction) {
   Page *page = FindLeafPage(key, root_page_id_);
   LeafPage *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
 
-  leaf_page->RemoveAndDeleteRecord(key, processor_);
+  // /* ONLY FOR DEBUG */
+  // int num_befor_delete = leaf_page->GetSize();
+  // int num_after_delete = leaf_page->RemoveAndDeleteRecord(key, processor_);
+  // bool delete_success = false;
+  // delete_success = (num_after_delete + 1 == num_befor_delete);
+
+  // if (!delete_success) {
+  //   ASSERT(false, "Delete fail.");
+  // }
+  // /* ONLY FOR DEBUG(end) */
+
 
   if (leaf_page->IsRootPage()) {
     if (AdjustRoot(leaf_page)) {
