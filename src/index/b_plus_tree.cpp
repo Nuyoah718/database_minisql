@@ -413,6 +413,7 @@ void BPlusTree::Redistribute(LeafPage *neighbor_node, LeafPage *node, int index)
   ASSERT(neighbor_node->GetSize() >= neighbor_node->GetMinSize(), "Underflow after redistribution.");
 }
 void BPlusTree::Redistribute(InternalPage *neighbor_node, InternalPage *node, int index) {
+  ASSERT(false, "TODO");
 }
 /*
  * Update root page if necessary
