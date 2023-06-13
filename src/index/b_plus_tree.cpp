@@ -170,7 +170,7 @@ BPlusTreeInternalPage *BPlusTree::Split(InternalPage *node, Transaction *transac
 
 BPlusTreeLeafPage *BPlusTree::Split(LeafPage *node, Transaction *transaction) {
   page_id_t new_page_id = INVALID_PAGE_ID;
-  page_id_t parent_id = node->GetPageId();
+  page_id_t parent_id = node->GetParentPageId();
   auto *page = buffer_pool_manager_->NewPage(new_page_id);
   ASSERT(page != nullptr, "Out of memory.");
 
