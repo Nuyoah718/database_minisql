@@ -7,10 +7,15 @@
 #include "record/row.h"
 
 /* Q: (Tao Chengjian)
- * Todo:
- *    key_size_            = ??
- *    sizeof(GenericKey)   = ??
- *    sizeof(GenericKey *) = ??
+ * Done:
+ *    1. key_size_            = it_depends_on_keys
+ *    2. sizeof(GenericKey)   = 0, 
+ *    3. sizeof(GenericKey *) = 8, 
+ * A:
+ *    1. To mark a GenericKey size, and the actual space allocated in InitKey().
+ *    2. No actual space to store data[0], the addr of data is 
+ *      the end of previous privatemember
+ *    3. A pointer to GenericKey, same as sizeof(void *).
  */
 class GenericKey {
   friend class KeyManager;
