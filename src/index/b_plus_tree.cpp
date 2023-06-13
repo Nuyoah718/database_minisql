@@ -570,7 +570,7 @@ bool BPlusTree::AdjustRoot(BPlusTreePage *old_root_node) {
  */
 IndexIterator BPlusTree::Begin() {
   /* page will be unpinned in Dtor */
-  Page *page = FindLeafPage(nullptr, INVALID_PAGE_ID, true); 
+  Page *page = FindLeafPage(nullptr, root_page_id_, true); 
   page_id_t p_id = page->GetPageId();
   buffer_pool_manager_->UnpinPage(p_id, false); // unpin after FindLeafPage
   return IndexIterator(p_id, buffer_pool_manager_, 0);
@@ -583,7 +583,7 @@ IndexIterator BPlusTree::Begin() {
  */
 IndexIterator BPlusTree::Begin(const GenericKey *key) {
   /* remember to use int LeafPage::KeyIndex() */
-  Page *page = FindLeafPage(key);
+  Page *page = FindLeafPage(key, root_page_id_);
   page_id_t p_id = page->GetPageId();
 
   auto *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
@@ -608,15 +608,12 @@ IndexIterator BPlusTree::End() {
 /*
  * Find leaf page containing particular key, if leftMost flag == true, find
  * the left most leaf page
+ * Start form 'page_id'!!!!!
  * Note: the leaf page is pinned, you need to UNPIN!! it after use.
  */
 Page *BPlusTree::FindLeafPage(const GenericKey *key, page_id_t page_id, bool leftMost) {
-  /* input parameter 'page_id' is not used; 
-   * Might be useful in recursive implementation. 
-   */
-  
-  auto *root_page = buffer_pool_manager_->FetchPage(root_page_id_);
-  BPlusTreePage *cur_page = reinterpret_cast<BPlusTreePage *>(root_page->GetData());
+  auto *begin_page = buffer_pool_manager_->FetchPage(page_id);
+  BPlusTreePage *cur_page = reinterpret_cast<BPlusTreePage *>(begin_page->GetData());
 
   while (!cur_page->IsLeafPage()) {
     /* cur_page is InternalPage */
