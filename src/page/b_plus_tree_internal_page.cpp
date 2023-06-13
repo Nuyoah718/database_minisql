@@ -124,9 +124,12 @@ page_id_t InternalPage::Lookup(const GenericKey *key, const KeyManager &KM) {
  * NOTE: This method is only called within InsertIntoParent()(b_plus_tree.cpp)
  */
 void InternalPage::PopulateNewRoot(const page_id_t &old_value, GenericKey *new_key, const page_id_t &new_value) {
+  ASSERT(GetSize() == 0, "New root should be empty.");
   SetValueAt(0,old_value);
   SetKeyAt(1, new_key);
   SetValueAt(1, new_value);
+
+  SetSize(2);
 }
 
 /*
