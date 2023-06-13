@@ -331,9 +331,13 @@ bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
     Redistribute(sibling_node, node, idx); // NOTE: node and sibling will not be swapped
     /* set parent's new middle key */
     int mid_idx = (idx == 0)? 1:idx;
-    GenericKey *new_middle_key = (idx == 0)? sibling_node->KeyAt(0):node->KeyAt(0);
+    N *rhs_node = (idx == 0)? sibling_node:node;
+    auto *rhs_leftmost_leaf = reinterpret_cast<LeafPage *>(FindLeafPage(nullptr, rhs_node->GetPageId(), true)->GetData());
+    GenericKey *new_middle_key = rhs_leftmost_leaf->KeyAt(0);
     inter_parent->SetKeyAt(mid_idx, new_middle_key);
     delete_node = false;
+
+    buffer_pool_manager_->UnpinPage(rhs_leftmost_leaf->GetPageId(), false);
   }
 
   buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
