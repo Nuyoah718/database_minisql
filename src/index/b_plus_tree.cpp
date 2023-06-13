@@ -413,7 +413,27 @@ void BPlusTree::Redistribute(LeafPage *neighbor_node, LeafPage *node, int index)
   ASSERT(neighbor_node->GetSize() >= neighbor_node->GetMinSize(), "Underflow after redistribution.");
 }
 void BPlusTree::Redistribute(InternalPage *neighbor_node, InternalPage *node, int index) {
-  ASSERT(false, "TODO");
+  ASSERT(!node->IsLeafPage(), "root page cannot redistribute.");
+  
+  if (index == 0) {
+    /* node -> neighbor */
+
+    /* find middle key */
+    auto *inter_root = reinterpret_cast<InternalPage *>(buffer_pool_manager_->FetchPage(node->GetParentPageId())->GetData());
+    GenericKey *middle = inter_root->KeyAt(1);
+
+    neighbor_node->MoveFirstToEndOf(node, middle, buffer_pool_manager_);    
+  } else {
+    /* neighbor -> node */
+
+    /* find middle key */
+    auto *inter_root = reinterpret_cast<InternalPage *>(buffer_pool_manager_->FetchPage(node->GetParentPageId())->GetData());
+    int idx = inter_root->ValueIndex(node->GetPageId());
+    GenericKey *middle = inter_root->KeyAt(idx);
+    
+    neighbor_node->MoveLastToFrontOf(node, middle, buffer_pool_manager_);
+  }
+  ASSERT(neighbor_node->GetSize() >= neighbor_node->GetMinSize(), "Underflow after redistribution.");
 }
 /*
  * Update root page if necessary
