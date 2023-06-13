@@ -292,8 +292,15 @@ void LeafPage::MoveFirstToEndOf(LeafPage *recipient) {
   /* move first to recipient's end */
   int size = GetSize();
   int r_size = recipient->GetSize();
+  ASSERT(size > 1, "Must have item for recipient.");
+
   /* copyLast from this node */
   recipient->CopyLastFrom(KeyAt(0), ValueAt(0));
+  ASSERT(r_size + 1 == recipient->GetSize() 
+      && r_size + 1 >= recipient->GetMinSize(), "Recipient still underflow.");
+
+  /* delete first element in this node */
+  PairMove(PairPtrAt(0), PairPtrAt(1), size - 1);
 
   /* modify size */
   SetSize(size - 1);
