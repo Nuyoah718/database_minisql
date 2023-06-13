@@ -4,9 +4,9 @@
 
 /* Q: (Tao Chengjian)
  *    Todo: determine
- *    [zju_db] pair_size = (GetKeySize() + sizeof(RowId))
+ *    [zju_db] pair_size = (GetKeySize() + sizeof(page_id_t))
  *    or 
- *    pair_size = (sizeof(std::pair<GenericKey *, RowId>) )
+ *    pair_size = (sizeof(std::pair<GenericKey *, page_id_t>) )
  */
 #define pairs_off (data_)
 #define pair_size (GetKeySize() + sizeof(page_id_t))
@@ -16,16 +16,6 @@
 /*****************************************************************************
  * HELPER METHODS AND UTILITIES
  *****************************************************************************/
-
-// /*
-//  * must call "Init()" method after "create" a new node
-//  */
-// InternalPage* InternalPage::Create_new_internal_page(page_id_t &page_id, BufferPoolManager *bpm) {
-//   auto *new_page = bpm->NewPage(page_id);
-//   auto *ret_new_page = reinterpret_cast<InternalPage *>(new_page->GetData());
-
-//   return ret_new_page;
-// }
 
 /*
  * Init method after creating a new internal page
@@ -221,6 +211,7 @@ void InternalPage::Remove(int index) {
   ASSERT(index >= 0 && index < size, "index not in [0, num_pairs)");
 
   if (index < size - 1) {
+    /* move the follwing pairs forward */
     int num = size - 1 - index;
     PairMove(PairPtrAt(index), PairPtrAt(index + 1), num);
   } else if (index == size - 1) {
