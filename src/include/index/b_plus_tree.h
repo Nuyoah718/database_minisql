@@ -32,7 +32,7 @@ class BPlusTree {
   // Returns true if this B+ tree has no keys and values.
   bool IsEmpty() const;
 
-  // Insert a key-value pair into this B+ tree.
+  // Insert a key-value pair into this B+ tree. Return false when duplicate.
   bool Insert(GenericKey *key, const RowId &value, Transaction *transaction = nullptr);
 
   // Remove a key and its value from this B+ tree.

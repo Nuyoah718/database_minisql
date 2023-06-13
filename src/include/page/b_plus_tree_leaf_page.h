@@ -71,6 +71,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   // Split and Merge utility methods
   void MoveHalfTo(BPlusTreeLeafPage *recipient);
 
+  // Always rhs->MoveAllTo(lhs), where rhs stores larger values.
   void MoveAllTo(BPlusTreeLeafPage *recipient);
 
   void MoveFirstToEndOf(BPlusTreeLeafPage *recipient);
