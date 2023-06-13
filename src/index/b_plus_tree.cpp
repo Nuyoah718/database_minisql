@@ -433,6 +433,11 @@ bool BPlusTree::AdjustRoot(BPlusTreePage *old_root_node) {
     page_id_t only_child_id = internal_root->RemoveAndReturnOnlyChild();
     root_page_id_ = only_child_id;
     UpdateRootPageId();
+
+    /* new root's parent id is INVALID */
+    auto *new_root = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(only_child_id)->GetData());
+    new_root->SetParentPageId(INVALID_PAGE_ID);
+    buffer_pool_manager_->UnpinPage(only_child_id, true);
   } else if(old_root_node->IsLeafPage() && old_root_node->GetSize() == 0) {
     /* case 2 */
     auto *leaf_root = reinterpret_cast<LeafPage *>(old_root_node);
