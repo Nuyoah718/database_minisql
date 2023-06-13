@@ -64,11 +64,11 @@ void *InternalPage::PairPtrAt(int index) {
 }
 
 void InternalPage::PairCopy(void *dest, void *src, int pair_num) {
-  memcpy(dest, src, pair_num * (GetKeySize() + sizeof(page_id_t)));
+  memcpy(dest, src, pair_num * pair_size);
 }
 
 void InternalPage::PairMove(void *dest, void *src, int pair_num) {
-  memmove(dest, src, pair_num * (GetKeySize() + sizeof(page_id_t)));
+  memmove(dest, src, pair_num * pair_size);
 }
 /*****************************************************************************
  * LOOKUP

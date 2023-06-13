@@ -105,11 +105,11 @@ void *LeafPage::PairPtrAt(int index) {
 }
 
 void LeafPage::PairCopy(void *dest, void *src, int pair_num) {
-  memcpy(dest, src, pair_num * (GetKeySize() + sizeof(RowId)));
+  memcpy(dest, src, pair_num * pair_size);
 }
 
 void LeafPage::PairMove(void *dest, void *src, int pair_num) {
-  memmove(dest, src, pair_num * (GetKeySize() + sizeof(RowId)));
+  memmove(dest, src, pair_num * pair_size);
 }
 
 /*
