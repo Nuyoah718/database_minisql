@@ -33,6 +33,7 @@ BPlusTree::BPlusTree(index_id_t index_id, BufferPoolManager *buffer_pool_manager
 }
 
 void BPlusTree::Destroy(page_id_t current_page_id) {
+  // TODO
 }
 
 /*
@@ -98,7 +99,7 @@ void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
   ASSERT(new_page != nullptr, "out of memory"); // exception
 
   auto *root_page = reinterpret_cast<BPlusTreeLeafPage *>(new_page->GetData());
-  root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE);
+  root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE(processor_.GetKeySize()));
   root_page_id_ = id;
   UpdateRootPageId();
 
@@ -160,7 +161,7 @@ BPlusTreeInternalPage *BPlusTree::Split(InternalPage *node, Transaction *transac
   ASSERT(page != nullptr, "Out of memory.");
 
   auto *in_page = reinterpret_cast<InternalPage *>(page->GetData());
-  in_page->Init(new_page_id, parent_id, node->GetKeySize(), INTERNAL_PAGE_SIZE);
+  in_page->Init(new_page_id, parent_id, node->GetKeySize(), INTERNAL_PAGE_SIZE(node->GetKeySize()));
 
   node->MoveHalfTo(in_page, buffer_pool_manager_);
   
@@ -175,7 +176,7 @@ BPlusTreeLeafPage *BPlusTree::Split(LeafPage *node, Transaction *transaction) {
   ASSERT(page != nullptr, "Out of memory.");
 
   auto *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
-  leaf_page->Init(new_page_id, parent_id, node->GetKeySize(), LEAF_PAGE_SIZE);
+  leaf_page->Init(new_page_id, parent_id, node->GetKeySize(), LEAF_PAGE_SIZE(node->GetKeySize()));
 
   node->MoveHalfTo(leaf_page);
 
@@ -206,7 +207,7 @@ void BPlusTree::InsertIntoParent(BPlusTreePage *old_node, GenericKey *key, BPlus
     /* create new page */
     page_id_t new_root_p_id = INVALID_PAGE_ID;
     auto *new_root = reinterpret_cast<InternalPage *>(buffer_pool_manager_->NewPage(new_root_p_id));
-    new_root->Init(new_root_p_id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE);
+    new_root->Init(new_root_p_id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE(processor_.GetKeySize()));
 
     /* populate new root page adopt this two */
     new_root->PopulateNewRoot(old_p_id, key, new_p_id);
@@ -258,7 +259,18 @@ void BPlusTree::Remove(const GenericKey *key, Transaction *transaction) {
   Page *page = FindLeafPage(key, root_page_id_);
   LeafPage *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
 
-  leaf_page->RemoveAndDeleteRecord(key, processor_);
+  // /* ONLY FOR DEBUG */
+  // int num_befor_delete = leaf_page->GetSize();
+  // int num_after_delete = leaf_page->RemoveAndDeleteRecord(key, processor_);
+  // bool delete_success = false;
+  // delete_success = (num_after_delete + 1 == num_befor_delete);
+
+  // if (!delete_success) {
+  //   ASSERT(false, "Delete fail.");
+  // }
+  // /* ONLY FOR DEBUG(end) */
+  leaf_page->RemoveAndDeleteRecord(key, processor_); // Comment when DEBUG
+
 
   if (leaf_page->IsRootPage()) {
     if (AdjustRoot(leaf_page)) {
@@ -331,9 +343,13 @@ bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
     Redistribute(sibling_node, node, idx); // NOTE: node and sibling will not be swapped
     /* set parent's new middle key */
     int mid_idx = (idx == 0)? 1:idx;
-    GenericKey *new_middle_key = (idx == 0)? sibling_node->KeyAt(0):node->KeyAt(0);
+    N *rhs_node = (idx == 0)? sibling_node:node;
+    auto *rhs_leftmost_leaf = reinterpret_cast<LeafPage *>(FindLeafPage(nullptr, rhs_node->GetPageId(), true)->GetData());
+    GenericKey *new_middle_key = rhs_leftmost_leaf->KeyAt(0);
     inter_parent->SetKeyAt(mid_idx, new_middle_key);
     delete_node = false;
+
+    buffer_pool_manager_->UnpinPage(rhs_leftmost_leaf->GetPageId(), false);
   }
 
   buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
@@ -570,7 +586,7 @@ bool BPlusTree::AdjustRoot(BPlusTreePage *old_root_node) {
  */
 IndexIterator BPlusTree::Begin() {
   /* page will be unpinned in Dtor */
-  Page *page = FindLeafPage(nullptr, INVALID_PAGE_ID, true); 
+  Page *page = FindLeafPage(nullptr, root_page_id_, true); 
   page_id_t p_id = page->GetPageId();
   buffer_pool_manager_->UnpinPage(p_id, false); // unpin after FindLeafPage
   return IndexIterator(p_id, buffer_pool_manager_, 0);
@@ -583,7 +599,7 @@ IndexIterator BPlusTree::Begin() {
  */
 IndexIterator BPlusTree::Begin(const GenericKey *key) {
   /* remember to use int LeafPage::KeyIndex() */
-  Page *page = FindLeafPage(key);
+  Page *page = FindLeafPage(key, root_page_id_);
   page_id_t p_id = page->GetPageId();
 
   auto *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
@@ -608,15 +624,12 @@ IndexIterator BPlusTree::End() {
 /*
  * Find leaf page containing particular key, if leftMost flag == true, find
  * the left most leaf page
+ * Start form 'page_id'!!!!!
  * Note: the leaf page is pinned, you need to UNPIN!! it after use.
  */
 Page *BPlusTree::FindLeafPage(const GenericKey *key, page_id_t page_id, bool leftMost) {
-  /* input parameter 'page_id' is not used; 
-   * Might be useful in recursive implementation. 
-   */
-  
-  auto *root_page = buffer_pool_manager_->FetchPage(root_page_id_);
-  BPlusTreePage *cur_page = reinterpret_cast<BPlusTreePage *>(root_page->GetData());
+  auto *begin_page = buffer_pool_manager_->FetchPage(page_id);
+  BPlusTreePage *cur_page = reinterpret_cast<BPlusTreePage *>(begin_page->GetData());
 
   while (!cur_page->IsLeafPage()) {
     /* cur_page is InternalPage */
@@ -717,7 +730,26 @@ void BPlusTree::ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstre
     for (int i = 0; i < inner->GetSize(); i++) {
       out << "<TD PORT=\"p" << inner->ValueAt(i) << "\">";
       if (i > 0) {
-        out << inner->KeyAt(i);
+        /**for debug: ONLY for type:INT **/
+        std::vector<Column *> columns = {
+            new Column("int", TypeId::kTypeInt, 0, false, false),
+        };
+        Schema *table_schema_ii = new Schema(columns);
+        KeyManager KP(table_schema_ii, 16);
+
+        // make row_key
+        vector<Field> empty_filed;
+        Row row_key = Row(empty_filed);
+
+        //get stored key
+        GenericKey *key = inner->KeyAt(i);
+        KP.DeserializeToKey(key, row_key, table_schema_ii);
+
+        string str_int_key = row_key.GetField(0)->toString();
+
+        out << str_int_key;
+        /**(end)for debug: ONLY for type:INT **/
+        // out << inner->KeyAt(i); // comment when debug
       } else {
         out << " ";
       }
