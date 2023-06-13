@@ -7,7 +7,7 @@ BPlusTreeIndex::BPlusTreeIndex(index_id_t index_id, IndexSchema *key_schema, siz
                                BufferPoolManager *buffer_pool_manager)
     : Index(index_id, key_schema),
       processor_(key_schema_, key_size),
-      container_(index_id, buffer_pool_manager, processor_) {}
+      container_(index_id, buffer_pool_manager, processor_, LEAF_PAGE_SIZE(key_size), INTERNAL_PAGE_SIZE(key_size)) {}
 
 dberr_t BPlusTreeIndex::InsertEntry(const Row &key, RowId row_id, Transaction *txn) {
   // ASSERT(row_id.Get() != INVALID_ROWID.Get(), "Invalid row id for index insert.");

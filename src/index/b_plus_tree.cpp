@@ -33,6 +33,7 @@ BPlusTree::BPlusTree(index_id_t index_id, BufferPoolManager *buffer_pool_manager
 }
 
 void BPlusTree::Destroy(page_id_t current_page_id) {
+  // TODO
 }
 
 /*
@@ -98,7 +99,7 @@ void BPlusTree::StartNewTree(GenericKey *key, const RowId &value) {
   ASSERT(new_page != nullptr, "out of memory"); // exception
 
   auto *root_page = reinterpret_cast<BPlusTreeLeafPage *>(new_page->GetData());
-  root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE);
+  root_page->Init(id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE(processor_.GetKeySize()));
   root_page_id_ = id;
   UpdateRootPageId();
 
@@ -160,7 +161,7 @@ BPlusTreeInternalPage *BPlusTree::Split(InternalPage *node, Transaction *transac
   ASSERT(page != nullptr, "Out of memory.");
 
   auto *in_page = reinterpret_cast<InternalPage *>(page->GetData());
-  in_page->Init(new_page_id, parent_id, node->GetKeySize(), INTERNAL_PAGE_SIZE);
+  in_page->Init(new_page_id, parent_id, node->GetKeySize(), INTERNAL_PAGE_SIZE(node->GetKeySize()));
 
   node->MoveHalfTo(in_page, buffer_pool_manager_);
   
@@ -175,7 +176,7 @@ BPlusTreeLeafPage *BPlusTree::Split(LeafPage *node, Transaction *transaction) {
   ASSERT(page != nullptr, "Out of memory.");
 
   auto *leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
-  leaf_page->Init(new_page_id, parent_id, node->GetKeySize(), LEAF_PAGE_SIZE);
+  leaf_page->Init(new_page_id, parent_id, node->GetKeySize(), LEAF_PAGE_SIZE(node->GetKeySize()));
 
   node->MoveHalfTo(leaf_page);
 
@@ -206,7 +207,7 @@ void BPlusTree::InsertIntoParent(BPlusTreePage *old_node, GenericKey *key, BPlus
     /* create new page */
     page_id_t new_root_p_id = INVALID_PAGE_ID;
     auto *new_root = reinterpret_cast<InternalPage *>(buffer_pool_manager_->NewPage(new_root_p_id));
-    new_root->Init(new_root_p_id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE);
+    new_root->Init(new_root_p_id, INVALID_PAGE_ID, processor_.GetKeySize(), LEAF_PAGE_SIZE(processor_.GetKeySize()));
 
     /* populate new root page adopt this two */
     new_root->PopulateNewRoot(old_p_id, key, new_p_id);

@@ -28,15 +28,15 @@
 #include "page/b_plus_tree_page.h"
 
 #define LEAF_PAGE_HEADER_SIZE 32
-// #define LEAF_PAGE_SIZE (((PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(std::pair<GenericKey *, RowId>)) - 1)
-#define LEAF_PAGE_SIZE 4 // only use this line when debugging
+#define LEAF_PAGE_SIZE(_key_size) (((PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / ((_key_size) + sizeof(RowId))) - 1)
+// #define LEAF_PAGE_SIZE 4 // only use this line when debugging
 
 class BPlusTreeLeafPage : public BPlusTreePage {
  public:
   // After creating a new leaf page from buffer pool, must call initialize
   // method to set default values
   void Init(page_id_t page_id, page_id_t parent_id = INVALID_PAGE_ID, int key_size = UNDEFINED_SIZE,
-            int max_size = LEAF_PAGE_SIZE);
+            int max_size = UNDEFINED_SIZE);
 
   // helper methods
   page_id_t GetNextPageId() const;

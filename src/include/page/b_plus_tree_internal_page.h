@@ -9,8 +9,8 @@
 #include "page/b_plus_tree_page.h"
 
 #define INTERNAL_PAGE_HEADER_SIZE 28
-// #define INTERNAL_PAGE_SIZE ((PAGE_SIZE - INTERNAL_PAGE_HEADER_SIZE) / (sizeof(std::pair<GenericKey *, page_id_t>)) - 1)
-#define INTERNAL_PAGE_SIZE 4 // only use this line when debugging
+#define INTERNAL_PAGE_SIZE(_key_size) (((PAGE_SIZE - INTERNAL_PAGE_HEADER_SIZE) / ((_key_size) + sizeof(page_id_t))) - 1)
+// #define INTERNAL_PAGE_SIZE 4 // only use this line when debugging
 /**
  * Store n indexed keys and n+1 child pointers (page_id) within internal page.
  * Pointer PAGE_ID(i) points to a subtree in which all keys K satisfy:
@@ -28,7 +28,7 @@ class BPlusTreeInternalPage : public BPlusTreePage {
  public:
   // must call initialize method after "create" a new node
   void Init(page_id_t page_id, page_id_t parent_id = INVALID_PAGE_ID, int key_size = UNDEFINED_SIZE,
-            int max_size = INTERNAL_PAGE_SIZE);
+            int max_size = UNDEFINED_SIZE);
 
   GenericKey *KeyAt(int index);
 
