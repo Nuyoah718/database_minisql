@@ -9,6 +9,9 @@
  *    [zju_db] pair_size = (GetKeySize() + sizeof(RowId))
  *    or 
  *    pair_size = (sizeof(std::pair<GenericKey *, RowId>) )
+ * A: Since the <key, Rowid> is strored in page, so must serialize to page!
+ *    Therefore, we don't store pair<GenericKey *, RowId>, which is a pointer 
+ *    in memory.
  */
 #define pairs_off (data_)
 #define pair_size (GetKeySize() + sizeof(RowId))
