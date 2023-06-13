@@ -718,7 +718,26 @@ void BPlusTree::ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstre
     for (int i = 0; i < inner->GetSize(); i++) {
       out << "<TD PORT=\"p" << inner->ValueAt(i) << "\">";
       if (i > 0) {
-        out << inner->KeyAt(i);
+        /**for debug: ONLY for type:INT **/
+        std::vector<Column *> columns = {
+            new Column("int", TypeId::kTypeInt, 0, false, false),
+        };
+        Schema *table_schema_ii = new Schema(columns);
+        KeyManager KP(table_schema_ii, 16);
+
+        // make row_key
+        vector<Field> empty_filed;
+        Row row_key = Row(empty_filed);
+
+        //get stored key
+        GenericKey *key = inner->KeyAt(i);
+        KP.DeserializeToKey(key, row_key, table_schema_ii);
+
+        string str_int_key = row_key.GetField(0)->toString();
+
+        out << str_int_key;
+        /**(end)for debug: ONLY for type:INT **/
+        // out << inner->KeyAt(i); // comment when debug
       } else {
         out << " ";
       }
