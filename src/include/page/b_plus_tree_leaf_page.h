@@ -28,7 +28,8 @@
 #include "page/b_plus_tree_page.h"
 
 #define LEAF_PAGE_HEADER_SIZE 32
-#define LEAF_PAGE_SIZE (((PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(std::pair<GenericKey *, RowId>)) - 1)
+// #define LEAF_PAGE_SIZE (((PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(std::pair<GenericKey *, RowId>)) - 1)
+#define LEAF_PAGE_SIZE 4 // only use this line when debugging
 
 class BPlusTreeLeafPage : public BPlusTreePage {
  public:
