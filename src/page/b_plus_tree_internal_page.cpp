@@ -265,8 +265,8 @@ void InternalPage::MoveAllTo(InternalPage *recipient, GenericKey *middle_key, Bu
     auto *page = buffer_pool_manager->FetchPage(child_page_id);
     auto *notype_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
 
-    // set child's parentId to this pageId.
-    notype_page->SetParentPageId(GetPageId());
+    // set child's parentId to recipient's pageId.
+    notype_page->SetParentPageId(recipient->GetPageId());
     buffer_pool_manager->UnpinPage(child_page_id, true);
   }
 
