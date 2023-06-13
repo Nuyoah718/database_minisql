@@ -294,6 +294,7 @@ bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
   page_id_t node_page_id = node->GetPageId();
   page_id_t sibling_page_id = INVALID_PAGE_ID;
 
+  /* find the index in parent node of this page */
   int idx = 0;
   for (; idx < size_p; ++idx) {
     if (inter_parent->ValueAt(idx) == node_page_id) {
@@ -315,7 +316,7 @@ bool BPlusTree::CoalesceOrRedistribute(N *&node, Transaction *transaction) {
   int size2 = sibling_node->GetSize();
 
   bool deletion_happens = false;
-  if (size1 + size2 < node->GetMaxSize()) {
+  if (size1 + size2 <= node->GetMaxSize()) {
     Coalesce(sibling_node, node, inter_parent, idx, transaction); 
     if (inter_parent->IsRootPage()) {
       AdjustRoot(inter_parent);
@@ -360,7 +361,7 @@ bool BPlusTree::Coalesce(LeafPage *&neighbor_node, LeafPage *&node, InternalPage
   buffer_pool_manager_->DeletePage(rhs->GetPageId());
   /* delete pair in parent */
   parent->Remove(index);
-  if (parent->GetSize() < parent->GetMinSize()) {
+  if (!parent->IsRootPage() && parent->GetSize() < parent->GetMinSize()) {
     CoalesceOrRedistribute(parent, transaction);
   }
   
