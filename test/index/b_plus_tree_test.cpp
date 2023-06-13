@@ -19,10 +19,11 @@ TEST(BPlusTreeTests, SampleTest) {
   BPlusTree tree(0, engine.bpm_, KP);
   TreeFileManagers mgr("tree_");
   // Prepare data
-  const int n = 30;
+  const int n = 30; // change test size
   vector<GenericKey *> keys;
   vector<RowId> values;
   vector<GenericKey *> delete_seq;
+  // vector<int> delete_seq_N;
   map<GenericKey *, RowId> kv_map;
   for (int i = 0; i < n; i++) {
     GenericKey *key = KP.InitKey();
@@ -31,12 +32,27 @@ TEST(BPlusTreeTests, SampleTest) {
     keys.push_back(key);
     values.push_back(RowId(i));
     delete_seq.push_back(key);
+    // delete_seq_N.push_back(i);
   }
   vector<GenericKey *> keys_copy(keys);
   // Shuffle data
   ShuffleArray(keys);
   ShuffleArray(values);
   ShuffleArray(delete_seq);
+
+  // /* DEBUG */
+  // // Shuffle data
+  // int seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+  // int seed2 = seed1 + 233;    // random but different from seed1
+  // cout << "seed1: " << seed1 << endl;
+  // cout << "seed2: " << seed2 << endl;
+  // // int seed1 = -1876133983; // when there is a bug, set to seed that cause bug.
+  // // int seed2 = -1876133983;
+  // shuffle(keys.begin(), keys.end(), default_random_engine(seed1));
+  // shuffle(values.begin(), values.end(), default_random_engine(seed1));
+  // shuffle(delete_seq.begin(), delete_seq.end(), default_random_engine(seed2));
+  // shuffle(delete_seq_N.begin(), delete_seq_N.end(), default_random_engine(seed2));
+
   // Map key value
   for (int i = 0; i < n; i++) {
     kv_map[keys[i]] = values[i];
@@ -58,6 +74,12 @@ TEST(BPlusTreeTests, SampleTest) {
   // Delete half keys
   for (int i = 0; i < n / 2; i++) {
     tree.Remove(delete_seq[i]);
+
+    // /* show delete seq */
+    // cout << "delete:" << delete_seq_N[i] << "  cnt = " << i << endl;
+
+    /* print tree */
+    // tree.PrintTree(mgr[i]);
   }
   tree.PrintTree(mgr[1]);
   // Check valid

@@ -268,6 +268,7 @@ void BPlusTree::Remove(const GenericKey *key, Transaction *transaction) {
   //   ASSERT(false, "Delete fail.");
   // }
   // /* ONLY FOR DEBUG(end) */
+  leaf_page->RemoveAndDeleteRecord(key, processor_); // Comment when DEBUG
 
 
   if (leaf_page->IsRootPage()) {
