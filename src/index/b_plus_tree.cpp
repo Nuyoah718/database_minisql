@@ -32,8 +32,29 @@ BPlusTree::BPlusTree(index_id_t index_id, BufferPoolManager *buffer_pool_manager
   buffer_pool_manager->UnpinPage(INDEX_ROOTS_PAGE_ID, true);
 }
 
+/* call in IndexInfo Dtor 
+ * delete <index_id, root_page_id> in INDEX_ROOTS_PAGE:
+ * do this job in catalog manager
+ */
 void BPlusTree::Destroy(page_id_t current_page_id) {
-  // TODO
+  /* private members */
+  if (current_page_id == INVALID_PAGE_ID) {
+    return;
+  }
+
+  auto *notype_page = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(current_page_id)->GetData());
+  /* if this page is internal page, delete all subtrees */
+  if (!notype_page->IsLeafPage()) {
+    auto *itn_page = reinterpret_cast<InternalPage *>(notype_page);
+    for (int i = 0; i < itn_page->GetSize(); ++i) {
+      page_id_t child_p_id = itn_page->ValueAt(i);
+      Destroy(child_p_id);
+    }
+  }
+
+  /* delete this page: LeafPage and InternalPage */
+  buffer_pool_manager_->DeletePage(current_page_id);
+  return;
 }
 
 /*

@@ -56,6 +56,7 @@ class IndexInfo {
 
   ~IndexInfo() {
     delete meta_data_;
+    index_->Destroy();
     delete index_;
     delete key_schema_;
   }

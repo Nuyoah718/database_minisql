@@ -393,6 +393,11 @@ dberr_t CatalogManager::DropIndex(const string &table_name, const string &index_
   /** CATALOG_META **/
   /* delete <index_id, page_id> and delete this page_id in bpm */
   catalog_meta_->DeleteIndexMetaPage(buffer_pool_manager_, i_id_tobe_delete);
+
+  /** INDEX_ROOTS_PAGE **/
+  auto *index_roots = reinterpret_cast<IndexRootsPage *>(buffer_pool_manager_->FetchPage(INDEX_ROOTS_PAGE_ID)->GetData());
+  index_roots->Delete(i_id_tobe_delete);
+  buffer_pool_manager_->UnpinPage(INDEX_ROOTS_PAGE_ID, true);
   
   /** IndexInfo* itself **/
   delete i_info_tobe_delete;
