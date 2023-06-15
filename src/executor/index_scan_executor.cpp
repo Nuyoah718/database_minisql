@@ -1,6 +1,6 @@
 #include "executor/executors/index_scan_executor.h"
 /**
-* TODO: Student Implement
+* DOING: Tao Chengjian Implement
 */
 IndexScanExecutor::IndexScanExecutor(ExecuteContext *exec_ctx, const IndexScanPlanNode *plan)
     : AbstractExecutor(exec_ctx), plan_(plan) {}
