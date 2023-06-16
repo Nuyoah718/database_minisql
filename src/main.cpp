@@ -16,7 +16,6 @@ void InitGoogleLog(char *argv) {
   FLAGS_logtostderr = true;
   FLAGS_colorlogtostderr = true;
   google::InitGoogleLogging(argv);
-  // LOG(INFO) << "glog started!";
 }
 
 void InputCommand(char *input, const int len) {
