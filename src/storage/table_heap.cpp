@@ -165,6 +165,51 @@ void TableHeap::DeleteTable(page_id_t page_id) {
     DeleteTable(first_page_id_);
 }
 
+bool TableHeap::GetNextTupleRid(const RowId &cur_rid, RowId *next_rid) {
+  // 获取当前页面的ID和槽位号
+  page_id_t cur_page_id = cur_rid.GetPageId();
+  uint32_t cur_slot_num = cur_rid.GetSlotNum();
+
+  // 获取当前页面
+  auto cur_page = reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(cur_page_id));
+  if (cur_page == nullptr) {
+    return false;
+  }
+
+  // 获取下一个元组的RID
+  RowId next_tuple_rid;
+  bool has_next_tuple = cur_page->GetNextTupleRid(cur_rid, &next_tuple_rid);
+
+  buffer_pool_manager_->UnpinPage(cur_page_id, false);
+
+  if (has_next_tuple) {
+    *next_rid = next_tuple_rid;
+    return true;
+  } else {
+    // 当前页面没有下一个元组，需要查找下一个页面
+    page_id_t next_page_id = cur_page->GetNextPageId();
+    if (next_page_id != INVALID_PAGE_ID) {
+      // 获取下一个页面
+      auto next_page = reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(next_page_id));
+      if (next_page == nullptr) {
+        return false;
+      }
+
+      // 获取下一个页面的第一个元组的RID
+      bool has_first_tuple = next_page->GetFirstTupleRid(next_rid);
+
+      buffer_pool_manager_->UnpinPage(next_page_id, false);
+
+      return has_first_tuple;
+    } else {
+      // 已经到达堆表的末尾，没有下一个元组了
+      next_rid->Set(INVALID_PAGE_ID, 0);
+      return false;
+    }
+  }
+}
+
+
 /**
  * TODO: Student Implement
  */
