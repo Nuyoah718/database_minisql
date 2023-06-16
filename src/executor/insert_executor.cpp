@@ -28,37 +28,6 @@ bool InsertExecutor::Next(Row *row, RowId *rid) {
     // 从行记录中提取字段值
     const std::vector<Field> &fields = reinterpret_cast<const std::vector<Field> &>(row->GetFields());
 
-    // 检查主键冲突
-    auto primary_keys = table_info->GetSchema()->getPrimaryKeys();
-    std::vector<Field> primary_key_fields;
-    for (uint32_t i = 0; i < primary_keys.size(); i++) {
-      primary_key_fields.push_back(fields[primary_keys[i]]);
-    }
-    Row primary_key_row(primary_key_fields);
-    IndexInfo *primary_index_info;
-    std::vector<RowId> rid_result;
-    rid_result.clear();
-    result = catalog_manager->GetIndex(table_name, table_name + "__primary", primary_index_info);
-    primary_index_info->GetIndex()->ScanKey(primary_key_row, rid_result, nullptr);
-    if (!rid_result.empty()) {
-      return false;  // 主键冲突
-    }
-
-    // 检查唯一键冲突
-    auto unique_keys = table_info->GetSchema()->getUniqueKeys();
-    for (uint32_t i = 0; i < unique_keys.size(); i++) {
-      std::vector<Field> unique_key_fields;
-      unique_key_fields.push_back(fields[unique_keys[i]]);
-      Row unique_key_row(unique_key_fields);
-      IndexInfo *unique_index_info;
-      rid_result.clear();
-      result = catalog_manager->GetIndex(table_name, table_name + "__unique__" + std::to_string(unique_keys[i]), unique_index_info);
-      unique_index_info->GetIndex()->ScanKey(unique_key_row, rid_result, nullptr);
-      if (!rid_result.empty()) {
-        return false;  // 唯一键冲突
-      }
-    }
-
     // 将行记录插入表中
     if (!table_info->GetTableHeap()->InsertTuple(*row, reinterpret_cast<Transaction *>(rid))) {
       return false;
