@@ -79,6 +79,7 @@ class ExecuteEngine {
  private:
   std::unordered_map<std::string, DBStorageEngine *> dbs_; /** all opened databases */
   std::string current_db_;                                 /** current database */
+  string dbs_name_file = "DBEXEENGINE.txt";
 };
 
 #endif  // MINISQL_EXECUTE_ENGINE_H
