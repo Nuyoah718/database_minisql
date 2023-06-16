@@ -68,8 +68,7 @@ TableIterator &TableIterator::operator++() {
   assert(cur_page != nullptr);  // all pages are pinned
 
   RowId next_tuple_rid;
-  if (!cur_page->GetNextTupleRid(row->GetRowId(),
-                                 &next_tuple_rid)) {  // end of this page
+  if (!cur_page->GetNextTupleRid(row->GetRowId(), &next_tuple_rid)) {
     while (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
       auto next_page = reinterpret_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()));
       cur_page->RUnlatch();
@@ -86,7 +85,6 @@ TableIterator &TableIterator::operator++() {
   if (*this != table_heap->End()) {
     table_heap->GetTuple(row ,nullptr);
   }
-  // release until copy the tuple
   cur_page->RUnlatch();
   buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
   return *this;
