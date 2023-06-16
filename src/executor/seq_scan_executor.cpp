@@ -1,11 +1,5 @@
-//
-// Created by njz on 2023/1/17.
-//
 #include "executor/executors/seq_scan_executor.h"
 
-/**
-* DOING: Tao Chengjian Implement
-*/
 SeqScanExecutor::SeqScanExecutor(ExecuteContext *exec_ctx, const SeqScanPlanNode *plan)
     : AbstractExecutor(exec_ctx),
       plan_(plan){}
