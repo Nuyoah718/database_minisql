@@ -14,6 +14,8 @@
 #include "transaction/transaction.h"
 
 extern "C" {
+extern int yyparse(void);
+extern FILE *yyin;
 #include "parser/parser.h"
 };
 
@@ -34,6 +36,7 @@ class ExecuteEngine {
    * executor interface
    */
   dberr_t Execute(pSyntaxNode ast);
+  //dberr_t Execute(pSyntaxNode ast, ExecuteContext *context);
 
   dberr_t ExecutePlan(const AbstractPlanNodeRef &plan, std::vector<Row> *result_set, Transaction *txn,
                       ExecuteContext *exec_ctx);
