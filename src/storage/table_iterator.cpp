@@ -3,10 +3,6 @@
 #include "common/macros.h"
 #include "storage/table_heap.h"
 
-
-/**
- * TODO: Student Implement
- */
 //使用初始化列表来初始化成员
 //如果传入的rid有效，则通过调用table_heap的GetTuple获取元组
 //如果传入的rid无效，则不进行操作
@@ -71,45 +67,56 @@ TableIterator &TableIterator::operator++() {
   }
 
   BufferPoolManager *buffer_pool_manager = table_heap->buffer_pool_manager_;
-  auto cur_page = static_cast<TablePage *>(buffer_pool_manager->FetchPage(row->GetRowId().GetPageId()));
+  TablePage* cur_page = nullptr;
 
-  if (cur_page == nullptr) {
-    throw std::runtime_error("Failed to fetch page from buffer pool manager");
-  }
+  try {
+    cur_page = static_cast<TablePage *>(buffer_pool_manager->FetchPage(row->GetRowId().GetPageId()));
 
-  cur_page->RLatch();
-
-  RowId next_tuple_rid;
-  while (true) {
-    if (cur_page->GetNextTupleRid(row->GetRowId(), &next_tuple_rid) ||
-        (cur_page->GetNextPageId() != INVALID_PAGE_ID &&
-         (cur_page = static_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()))) != nullptr &&
-         cur_page->GetFirstTupleRid(&next_tuple_rid))) {
-      break;
+    if (cur_page == nullptr) {
+      throw std::runtime_error("Failed to fetch page from buffer pool manager");
     }
 
-    if (cur_page->GetNextPageId() == INVALID_PAGE_ID) {
-      cur_page->RUnlatch();
-      buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
-      throw std::runtime_error("Failed to find next tuple");
+    cur_page->RLatch();
+
+    RowId next_tuple_rid;
+    bool next_tuple_found = false;
+    while (!next_tuple_found) {
+      if (cur_page->GetNextTupleRid(row->GetRowId(), &next_tuple_rid)) {
+        next_tuple_found = true;
+        break;
+      }
+
+      if (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
+        cur_page->RUnlatch();
+        buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
+        cur_page = static_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()));
+        if(cur_page != nullptr) {
+          cur_page->RLatch();
+        }
+      }
+      else {
+        break;
+      }
     }
+
+    if (row != nullptr)
+      delete row;
+
+    row = new Row(next_tuple_rid);
+
+    if (*this != table_heap->End())
+      table_heap->GetTuple(row, nullptr);
 
     cur_page->RUnlatch();
     buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
-    cur_page = static_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()));
-    cur_page->RLatch();
   }
-
-  if (row != nullptr)
-    delete row;
-
-  row = new Row(next_tuple_rid);
-
-  if (*this != table_heap->End())
-    table_heap->GetTuple(row, nullptr);
-
-  cur_page->RUnlatch();
-  buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
+  catch (...) {
+    if(cur_page != nullptr) {
+      cur_page->RUnlatch();
+      buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
+    }
+    throw;
+  }
 
   return *this;
 }
