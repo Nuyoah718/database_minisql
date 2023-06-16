@@ -104,7 +104,9 @@ class TableHeap {
    */
   inline page_id_t GetFirstPageId() const { return first_page_id_; }
 
-private:
+  bool GetNextTupleRid(const RowId &cur_rid, RowId *next_rid);
+
+ private:
   /**
    * create table heap and initialize first page
    */
