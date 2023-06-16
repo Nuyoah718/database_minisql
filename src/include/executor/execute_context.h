@@ -1,7 +1,3 @@
-//
-// Created by njz on 2023/1/16.
-//
-
 #ifndef MINISQL_EXECUTE_CONTEXT_H
 #define MINISQL_EXECUTE_CONTEXT_H
 
@@ -33,6 +29,8 @@ class ExecuteContext {
 
   /** @return the buffer pool manager */
   BufferPoolManager *GetBufferPoolManager() { return bpm_; }
+
+  bool flag_quit_;
 
  private:
   /** The transaction context associated with this executor context */
