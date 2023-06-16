@@ -16,7 +16,6 @@ void InitGoogleLog(char *argv) {
   FLAGS_logtostderr = true;
   FLAGS_colorlogtostderr = true;
   google::InitGoogleLogging(argv);
-  // LOG(INFO) << "glog started!";
 }
 
 void InputCommand(char *input, const int len) {
@@ -80,6 +79,7 @@ int main(int argc, char **argv) {
     // quit condition
     engine.ExecuteInformation(result);
     if (result == DB_QUIT) {
+      printf("bye!\n");
       break;
     }
   }
