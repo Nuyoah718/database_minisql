@@ -664,12 +664,73 @@ dberr_t ExecuteEngine::ExecuteTrxRollback(pSyntaxNode ast, ExecuteContext *conte
 /**
  * TODO: Student Implement
  */
-dberr_t ExecuteEngine::ExecuteExecfile(pSyntaxNode ast, ExecuteContext *context) {
+dberr_t ExecuteEngine::ExecuteExecfile(pSyntaxNode ast, ExecuteContext *context)
+{
 #ifdef ENABLE_EXECUTE_DEBUG
   LOG(INFO) << "ExecuteExecfile" << std::endl;
 #endif
+
+  std::string filename(ast->child_->val_);
+  std::ifstream exefstream(filename);
+  if (!exefstream.is_open()) {
+    LOG(ERROR) << "Failed to open '" << filename << "'";
+    return DB_FAILED;
+  }
+
+  std::vector<char> cmd(1024);
+  size_t tmp_counter = 0;
+
+  while (true) {
+    char tmp_char = exefstream.get();
+    if (exefstream.eof()) {
+      return DB_SUCCESS;
+    }
+
+    cmd[tmp_counter++] = tmp_char;
+
+    if (tmp_counter >= cmd.size()) {
+      LOG(ERROR) << "Buffer overflow";
+      return DB_FAILED;
+    }
+
+    if (tmp_char != ';') continue;
+
+    cmd[tmp_counter] = 0;
+    YY_BUFFER_STATE bp = yy_scan_string(cmd.data());
+    if (bp == nullptr) {
+      LOG(ERROR) << "Failed to create yy buffer state.";
+      exit(1);
+    }
+
+    yy_switch_to_buffer(bp);
+
+    MinisqlParserInit();
+
+    yyparse();
+
+    if (MinisqlParserGetError()) {
+      printf("%s\n", MinisqlParserGetErrorMessage());
+    }
+
+    auto res = this->Execute(MinisqlGetParserRootNode());
+    if (res != DB_SUCCESS) {
+      LOG(ERROR) << "Execution of command failed.";
+      return res;
+    }
+
+    MinisqlParserFinish();
+    yy_delete_buffer(bp);
+    yylex_destroy();
+
+    if (context->flag_quit_) {
+      printf("bye!\n");
+      break;
+    }
+  }
+
   return DB_FAILED;
 }
+
 
 /**
  * TODO: Student Implement
