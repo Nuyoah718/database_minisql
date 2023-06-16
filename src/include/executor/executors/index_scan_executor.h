@@ -38,4 +38,10 @@ class IndexScanExecutor : public AbstractExecutor {
 
   /** The sequential scan plan node to be executed */
   const IndexScanPlanNode *plan_;
+
+  // AbstractExpressionRef filter_predicate_;
+  // std::vector<RowId> r_ids_;
+  // int cur_;
+  // int size_rows_;
+  // TableHeap *table_heap_;
 };
