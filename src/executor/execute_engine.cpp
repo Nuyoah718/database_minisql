@@ -14,6 +14,7 @@
 #include "executor/executors/update_executor.h"
 #include "executor/executors/values_executor.h"
 #include "glog/logging.h"
+#include "parser/minisql_lex.h"
 #include "planner/planner.h"
 #include "utils/utils.h"
 
@@ -284,7 +285,7 @@ dberr_t ExecuteEngine::ExecuteDropDatabase(pSyntaxNode ast, ExecuteContext *cont
   if (current_db_ == db_name) {
     current_db_ = "";
   }
- return DB_FAILED;
+  return DB_FAILED;
 }
 
 /**
@@ -496,7 +497,7 @@ dberr_t ExecuteEngine::ExecuteDropTable(pSyntaxNode ast, ExecuteContext *context
       return err;
     }
   }
- return DB_FAILED;
+  return DB_FAILED;
 }
 
 /**
@@ -506,25 +507,25 @@ dberr_t ExecuteEngine::ExecuteShowIndexes(pSyntaxNode ast, ExecuteContext *conte
 #ifdef ENABLE_EXECUTE_DEBUG
   LOG(INFO) << "ExecuteShowIndexes" << std::endl;
 #endif
-if (current_db_.empty()){
+  if (current_db_.empty()){
     LOG(WARNING) << "No database selected.";
     return DB_FAILED;
-}
+  }
 
-//get all tables to get indexes.
-std::vector<TableInfo *> table_info_vec;
-context->GetCatalog()->GetTables(table_info_vec);
+  //get all tables to get indexes.
+  std::vector<TableInfo *> table_info_vec;
+  context->GetCatalog()->GetTables(table_info_vec);
 
-//Use map to store the table name and its index info.
-map< string, vector<IndexInfo *> > table_index_vec_pair;
-for(auto table_info : table_info_vec){
+  //Use map to store the table name and its index info.
+  map< string, vector<IndexInfo *> > table_index_vec_pair;
+  for(auto table_info : table_info_vec){
     string table_name = table_info->GetTableName();
     std::vector<IndexInfo *> index_info_vec;
     context->GetCatalog()->GetTableIndexes(table_name, index_info_vec);
     table_index_vec_pair[table_name] = index_info_vec;
-}
+  }
 
-for(auto it : table_index_vec_pair){
+  for(auto it : table_index_vec_pair){
     cout << "@ table \"" << it.first << "\",we have indexes:" << endl;
     for(auto index_info : it.second){
       cout << "   "<< index_info->GetIndexKeySchema() << "on columns: ";
@@ -533,7 +534,7 @@ for(auto it : table_index_vec_pair){
       }
       cout << endl;
     }
-}
+  }
   return DB_FAILED;
 }
 
@@ -588,7 +589,7 @@ for(auto it : table_index_vec_pair){
   for (auto row_itr = table_heap->Begin(txn); row_itr != table_heap->End(); ++row_itr) {
     Row row = *row_itr;
 
-    Row key()
+    Row key();
   }
 
 
@@ -604,8 +605,8 @@ dberr_t ExecuteEngine::ExecuteDropIndex(pSyntaxNode ast, ExecuteContext *context
 #endif
   // If no database is selected, we should reject the request.
   if (current_db_.empty()) {
-  LOG(WARNING) << "No database selected.";
-  return DB_FAILED;
+    LOG(WARNING) << "No database selected.";
+    return DB_FAILED;
   }
 
   // Get the index name.
@@ -616,21 +617,21 @@ dberr_t ExecuteEngine::ExecuteDropIndex(pSyntaxNode ast, ExecuteContext *context
   vector<TableInfo *> table_info_vec;
   dberr_t err = context->GetCatalog()->GetTables(table_info_vec);
   if (err != DB_SUCCESS) {
-  return err;
+    return err;
   }
   // Search for the table.
   for (auto table_info : table_info_vec) {
-  IndexInfo * index_info;
-  err = context->GetCatalog()->GetIndex(table_info->GetTableName(), index_name, index_info);
-  if (err == DB_SUCCESS) {
+    IndexInfo * index_info;
+    err = context->GetCatalog()->GetIndex(table_info->GetTableName(), index_name, index_info);
+    if (err == DB_SUCCESS) {
       table_name = table_info->GetTableName();
       break;
-  }
+    }
   }
 
   if (table_name.empty()) {
-  LOG(WARNING) << "No related table found.";
-  return DB_INDEX_NOT_FOUND;
+    LOG(WARNING) << "No related table found.";
+    return DB_INDEX_NOT_FOUND;
   }
 
   // Drop index.
@@ -739,5 +740,5 @@ dberr_t ExecuteEngine::ExecuteQuit(pSyntaxNode ast, ExecuteContext *context) {
 #ifdef ENABLE_EXECUTE_DEBUG
   LOG(INFO) << "ExecuteQuit" << std::endl;
 #endif
- return DB_QUIT;
+  return DB_QUIT;
 }
