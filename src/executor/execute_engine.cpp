@@ -539,7 +539,7 @@ dberr_t ExecuteEngine::ExecuteShowIndexes(pSyntaxNode ast, ExecuteContext *conte
 }
 
 /**
- * TODO: Student Implement
+ * DONE: Student Implement
  */dberr_t ExecuteEngine::ExecuteCreateIndex(pSyntaxNode ast, ExecuteContext *context) {
 #ifdef ENABLE_EXECUTE_DEBUG
   LOG(INFO) << "ExecuteCreateIndex" << std::endl;
@@ -578,21 +578,20 @@ dberr_t ExecuteEngine::ExecuteShowIndexes(pSyntaxNode ast, ExecuteContext *conte
   }
 
   Index *idx = index_info->GetIndex();
+  TableSchema *t_schema = table_info->GetSchema();
   IndexSchema *i_schema = index_info->GetIndexKeySchema();
   TableHeap *table_heap = table_info->GetTableHeap();
-  // build key_map of index
-  std::vector<uint32_t> key_map;
-  for (int i = 0; i < i_schema->GetColumnCount(); ++i) {
-    key_map.push_back(i_schema->GetColumn(i)->GetTableInd());
-  }
   // insert index entry
   for (auto row_itr = table_heap->Begin(txn); row_itr != table_heap->End(); ++row_itr) {
     Row row = *row_itr;
+    
+    Row key(INVALID_ROWID);
+    row.GetKeyFromRow(t_schema, i_schema, key);
+    ASSERT(key.GetFieldCount() == i_schema->GetColumnCount(), "GetKeyFromRow fails.");
 
-    Row key();
+    idx->InsertEntry(key, row.GetRowId(), txn);
   }
-
-
+  
   return DB_FAILED;
 }
 
