@@ -8,8 +8,8 @@
 class TableHeap;
 
 class TableIterator {
- private:
-  explicit TableIterator() = default;
+ public:
+  explicit TableIterator() = default; // 原本是private， 但是后续engine 需要初始空的iterator
 
  public:
   //构造函数和析构函数

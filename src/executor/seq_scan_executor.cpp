@@ -19,16 +19,16 @@ void SeqScanExecutor::Init() {
     ASSERT(false, sprintf("table_name: %s does not exists.", t_name.c_str()));
   }
   table_heap_ = table_info->GetTableHeap();
-  cur = table_heap_->Begin(nullptr); // Begin(txn)?
+  cur_ = table_heap_->Begin(exec_ctx_->GetTransaction());
 
   /* get predicate */
   filter_predicate_ = plan_->GetPredicate();
 }
 
 bool SeqScanExecutor::Next(Row *row, RowId *rid) {
-  while (cur != table_heap_->End()) {
-    cur++;
-    Row row_tobe_filtered = *cur;
+  while (cur_ != table_heap_->End()) {
+    cur_++;
+    Row row_tobe_filtered = *cur_;
     auto is_valid = filter_predicate_->Evaluate(&row_tobe_filtered);
     if (is_valid.CompareEquals(Field(kTypeInt, 1)) == CmpBool::kTrue) {
       /* predicate is true */
