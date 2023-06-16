@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
     // quit condition
     engine.ExecuteInformation(result);
-    if (context.flag_quit_) {
+    if (result == DB_QUIT) {
       printf("bye!\n");
       break;
     }
