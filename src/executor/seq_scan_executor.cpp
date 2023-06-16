@@ -27,9 +27,9 @@ void SeqScanExecutor::Init() {
 
 bool SeqScanExecutor::Next(Row *row, RowId *rid) {
   while (cur_ != table_heap_->End()) {
-    cur_++;
     Row row_tobe_filtered = *cur_;
     auto is_valid = filter_predicate_->Evaluate(&row_tobe_filtered);
+    cur_++;
     if (is_valid.CompareEquals(Field(kTypeInt, 1)) == CmpBool::kTrue) {
       /* predicate is true */
       new(row) Row(row_tobe_filtered);
