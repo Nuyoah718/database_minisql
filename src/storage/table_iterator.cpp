@@ -18,10 +18,10 @@ TableIterator::TableIterator(const TableIterator &other)
 
 //析构函数，释放动态分配的Row
 TableIterator::~TableIterator() {
-  if (row != nullptr) {
+ // if (row != nullptr) {
     delete row;
-    row = nullptr;
-  }
+   // row = nullptr;
+  //}
 }
 
 TableIterator &TableIterator::operator=(const TableIterator &other) noexcept {
@@ -62,65 +62,35 @@ Row *TableIterator::operator->() {
 
 //重载++操作符
 TableIterator &TableIterator::operator++() {
-  if (table_heap == nullptr || row == nullptr) {
-    throw std::runtime_error("Invalid TableIterator state.");
-  }
-
   BufferPoolManager *buffer_pool_manager = table_heap->buffer_pool_manager_;
-  TablePage* cur_page = nullptr;
+  auto cur_page = reinterpret_cast<TablePage *>(buffer_pool_manager->FetchPage(row->GetRowId().GetPageId()));
+  cur_page->RLatch();
+  assert(cur_page != nullptr);  // all pages are pinned
 
-  try {
-    cur_page = static_cast<TablePage *>(buffer_pool_manager->FetchPage(row->GetRowId().GetPageId()));
-
-    if (cur_page == nullptr) {
-      throw std::runtime_error("Failed to fetch page from buffer pool manager");
-    }
-
-    cur_page->RLatch();
-
-    RowId next_tuple_rid;
-    bool next_tuple_found = false;
-    while (!next_tuple_found) {
-      if (cur_page->GetNextTupleRid(row->GetRowId(), &next_tuple_rid)) {
-        next_tuple_found = true;
-        break;
-      }
-
-      if (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
-        cur_page->RUnlatch();
-        buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
-        cur_page = static_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()));
-        if(cur_page != nullptr) {
-          cur_page->RLatch();
-        }
-      }
-      else {
-        break;
-      }
-    }
-
-    if (row != nullptr)
-      delete row;
-
-    row = new Row(next_tuple_rid);
-
-    if (*this != table_heap->End())
-      table_heap->GetTuple(row, nullptr);
-
-    cur_page->RUnlatch();
-    buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
-  }
-  catch (...) {
-    if(cur_page != nullptr) {
+  RowId next_tuple_rid;
+  if (!cur_page->GetNextTupleRid(row->GetRowId(),
+                                 &next_tuple_rid)) {  // end of this page
+    while (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
+      auto next_page = reinterpret_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()));
       cur_page->RUnlatch();
       buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
+      cur_page = next_page;
+      cur_page->RLatch();
+      if (cur_page->GetFirstTupleRid(&next_tuple_rid)) {
+        break;
+      }
     }
-    throw;
   }
+  row = new Row(next_tuple_rid);
 
+  if (*this != table_heap->End()) {
+    table_heap->GetTuple(row ,nullptr);
+  }
+  // release until copy the tuple
+  cur_page->RUnlatch();
+  buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
   return *this;
 }
-
 //重载++(int)操作符
 TableIterator TableIterator::operator++(int) {
   TableIterator temp(*this);    //先保存当前迭代器状态，再执行自增，最后返回保存的旧状态
