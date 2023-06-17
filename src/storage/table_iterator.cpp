@@ -61,34 +61,39 @@ Row *TableIterator::operator->() {
 }
 
 //重载++操作符
-TableIterator &TableIterator::operator++() {
-  BufferPoolManager *buffer_pool_manager = table_heap->buffer_pool_manager_;
-  auto cur_page = reinterpret_cast<TablePage *>(buffer_pool_manager->FetchPage(row->GetRowId().GetPageId()));
+TableIterator& TableIterator::operator++() {
+  BufferPoolManager* buffer_pool_manager = table_heap->buffer_pool_manager_;
+  auto cur_page = reinterpret_cast<TablePage*>(buffer_pool_manager->FetchPage(row->GetRowId().GetPageId()));
   cur_page->RLatch();
-  assert(cur_page != nullptr);  // all pages are pinned
+  assert(cur_page != nullptr);    //所有页面均已固定
 
   RowId next_tuple_rid;
   if (!cur_page->GetNextTupleRid(row->GetRowId(), &next_tuple_rid)) {
     while (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
-      auto next_page = reinterpret_cast<TablePage *>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()));
+      //获取下一页的页面ID，并使用buffer_pool_manager获取对应的页面。
+      auto next_page = reinterpret_cast<TablePage*>(buffer_pool_manager->FetchPage(cur_page->GetNextPageId()));
       cur_page->RUnlatch();
+      //解除当前页面的固定状态，将cur_page更新为下一页，对新的页面再进行读锁定
       buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
       cur_page = next_page;
       cur_page->RLatch();
       if (cur_page->GetFirstTupleRid(&next_tuple_rid)) {
-        break;
+        break;    //如果新的当前页面存在第一个元组，则跳出循环
       }
     }
   }
-  row = new Row(next_tuple_rid);
+  delete row;    //释放之前的行，避免内存泄露
+  row = new Row(next_tuple_rid);    //使用下一个元组的行ID创建新的行对象
 
-  if (*this != table_heap->End()) {
-    table_heap->GetTuple(row ,nullptr);
+  if (*this != table_heap->End()) {    //如果迭代器不等于table_heap的末尾迭代器
+    table_heap->GetTuple(row, nullptr);    //获取新行对应的元组数据
   }
   cur_page->RUnlatch();
   buffer_pool_manager->UnpinPage(cur_page->GetTablePageId(), false);
+
   return *this;
 }
+
 //重载++(int)操作符
 TableIterator TableIterator::operator++(int) {
   TableIterator temp(*this);    //先保存当前迭代器状态，再执行自增，最后返回保存的旧状态
