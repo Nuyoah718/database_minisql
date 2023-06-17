@@ -1,7 +1,3 @@
-//
-// Created by njz on 2023/1/27.
-//
-
 #include "executor/executors/insert_executor.h"
 
 InsertExecutor::InsertExecutor(ExecuteContext *exec_ctx, const InsertPlanNode *plan,
