@@ -1,7 +1,3 @@
-//
-// Created by njz on 2023/1/31.
-//
-
 #include "executor/executors/values_executor.h"
 
 ValuesExecutor::ValuesExecutor(ExecuteContext *exec_ctx, const ValuesPlanNode *plan)
