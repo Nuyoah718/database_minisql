@@ -1,12 +1,9 @@
-//
-// Created by njz on 2023/1/26.
-//
 #include "executor/plans/delete_plan.h"
 #include "executor/plans/insert_plan.h"
 #include "executor/plans/seq_scan_plan.h"
 #include "executor/plans/update_plan.h"
 #include "executor/plans/values_plan.h"
-#include "executor_test_util.h"  // NOLINT
+#include "executor_test_util.h"
 
 // SELECT id FROM table-1 WHERE id < 500
 TEST_F(ExecutorTest, SimpleSeqScanTest) {
